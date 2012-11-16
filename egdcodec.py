@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import codecs
+
 def egd_replace(e):
     if e.object[e.start:e.end] == u'ö':
         return (u'oe', e.end)

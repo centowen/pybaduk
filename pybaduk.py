@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from dulwich.repo import Repo
-from dulwich.objects import Blob, Tree, Commit, parse_timezone
 from time import time
 
-import dulwich
+import dulwich.errors
 import os.path
 import json
 
@@ -13,6 +12,7 @@ import egdcodec
 codecs.register_error('egd', egdcodec.egd_replace)
 
 class Player(object):
+    """Class to manage a player with corresponding git file.""" 
     def __init__(self, repo, params=None, path=None):
         self.repo = repo
         if path:
@@ -28,7 +28,6 @@ class Player(object):
             json.dump(params, open(self.fq_player_path, 'w'))
             repo.stage(self.rel_player_path)
             repo.do_commit('appending new player.', committer = 'Should have some session id here.')
-
 
     def __str__(self):
         return unicode(self).encode('ascii', errors='egd')
@@ -47,30 +46,37 @@ class Player(object):
         new_rel_player_path = os.path.join(PlayerList.path, newfilename)
         new_fq_player_path = os.path.join(repo.path, new_rel_player_path)
         os.rename(self.fq_player_path, new_fq_player_path)
-        repo.stage(self.rel_player_path)
+        self.repo.stage(self.rel_player_path)
         self.fq_player_path = new_fq_player_path
         self.rel_player_path = new_rel_player_path
 
     def __getitem__(self, key):
-        return self.get_player_property(key)
+        return self._get_player_property(key)
     def __setitem__(self, key, value):
         if key == 'given_name':
-            self._rename_file(value, self.get_player_property('family_name'))
+            self._rename_file(value, self._get_player_property('family_name'))
         elif key == 'family_name':
-            self._rename_file(self.get_player_property('given_name'), value)
+            self._rename_file(self._get_player_property('given_name'), value)
 
-        self.set_player_property(key, value)
+        self._set_player_property(key, value)
 
-    def get_player_property(self, key):
+    def __delitem__(self, key):
+        data = json.load(open(self.fq_player_path))
+        del data[key]
+        json.dump(data, open(self.fq_player_path, 'w'))
+        self.repo.stage(self.rel_player_path)
+        self.repo.do_commit('Modifying player.', committer = 'Should have some session id here.')
+
+    def _get_player_property(self, key):
         data = json.load(open(self.fq_player_path))
         return data.get(key,None)
 
-    def set_player_property(self, key, value):
+    def _set_player_property(self, key, value):
         data = json.load(open(self.fq_player_path))
         data[key] = value
         json.dump(data, open(self.fq_player_path, 'w'))
-        repo.stage(self.rel_player_path)
-        repo.do_commit('Modifying player.', committer = 'Should have some session id here.')
+        self.repo.stage(self.rel_player_path)
+        self.repo.do_commit('Modifying player.', committer = 'Should have some session id here.')
 
 
 class PlayerList(object):
@@ -91,7 +97,29 @@ class PlayerList(object):
             yield Player(repo, path=os.path.join(self.path, player))
 
     def append(self, params):
+        players = os.listdir(self.fq_playerdir_path)
         Player(self.repo, params=params)
+
+class PairingList(object):
+    """Class managing a git repository with a list of pairings."""
+    path = 'pairings'
+
+    def __init__(self, repo):
+        self.repo = repo
+        self.fq_pairingdir_path = os.path.join(repo.path, PairingList.path)
+        if not os.path.isdir(self.fq_pairingdir_path):
+            os.mkdir(self.fq_pairingdir_path)
+
+    def __len__(self):
+        return len(os.listdir(self.fq_pairingdir_path))
+
+    def __iter__(self):
+        for pairing in os.listdir(self.fq_pairingdir_path):
+            yield Pairing(repo, path=os.path.join(self.path, player))
+
+    def append(self, params):
+        players = os.listdir(self.fq_playerdir_path)
+        Pairing(self.repo, params=params)
 
 
 if __name__ == "__main__":
@@ -102,12 +130,13 @@ if __name__ == "__main__":
         repo = Repo.init("/data/lindroos/pybaduk/turn")
     p = PlayerList(repo)
 
-    p.append({'given_name': u'Robert', 'family_name': u'Åhs'})
-    p.append({'given_name': u'Eskil', 'family_name': u'Varenius', 'rank': '2K'})
-    p.append({'given_name': u'Lukas', 'family_name': u'Lindroos', 'rank': '6K'})
-    p.append({'given_name': u'Erik', 'family_name': u'Änterhake'})
-    p.append({'given_name': u'Magnus', 'family_name': u'Sandén', 'rank': '7K'})
-    p.append({'given_name': u'Niklas', 'family_name': u'Örjansson'})
+    if len(p) == 0:
+        p.append({'given_name': u'Robert', 'family_name': u'Åhs'})
+        p.append({'given_name': u'Eskil', 'family_name': u'Varenius', 'rank': '2K'})
+        p.append({'given_name': u'Lukas', 'family_name': u'Lindroos', 'rank': '6K'})
+        p.append({'given_name': u'Erik', 'family_name': u'Änterhake'})
+        p.append({'given_name': u'Magnus', 'family_name': u'Sandén', 'rank': '7K'})
+        p.append({'given_name': u'Niklas', 'family_name': u'Örjansson'})
 
     for player in sorted(list(p), key=lambda player: player['family_name']):
         print unicode(player)
