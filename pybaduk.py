@@ -8,26 +8,9 @@ import os.path
 import json
 
 import codecs
-# egd_replace = codecs.replace_errors
+import egdcodec
 
-def egd_replace(e):
-    if e.object[e.start:e.end] == u'ö':
-        return (u'oe', e.end)
-    elif e.object[e.start:e.end] == u'Ö':
-        return (u'Oe', e.end)
-    elif e.object[e.start:e.end] == u'Ä':
-        return (u'Ae', e.end)
-    elif e.object[e.start:e.end] == u'ä':
-        return (u'ae', e.end)
-    elif e.object[e.start:e.end] == u'Å':
-        return (u'Aa', e.end)
-    elif e.object[e.start:e.end] == u'å':
-        return (u'aa', e.end)
-    elif e.object[e.start:e.end] == u'é':
-        return (u'e', e.end)
-    return codecs.ignore_errors(e)
-
-codecs.register_error('egd', egd_replace)
+codecs.register_error('egd', egdcodec.egd_replace)
 
 class Player(object):
     def __init__(self, repo, params=None, path=None):
@@ -48,55 +31,42 @@ class Player(object):
 
 
     def __str__(self):
-        data = json.load(open(self.fq_player_path))
-#         rank = data.get('rank', default='No rank')
-        rank = data.get('rank', 'No rank')
-        given_name = data['given_name']
-        family_name = data['family_name']
-        return u'{0} {1} ({2})'.format(given_name, family_name, rank).encode('ascii', errors='egd')
+        return unicode(self).encode('ascii', errors='egd')
 
     def __unicode__(self):
         data = json.load(open(self.fq_player_path))
-#         rank = data.get('rank', default='No rank')
         rank = data.get('rank', 'No rank')
         given_name = data['given_name']
         family_name = data['family_name']
         return u'{0} {1} ({2})'.format(given_name, family_name, rank)
 
+    def _rename_file(self, given_name, family_name):
+        newfilename = u'{0}_{1}'.format(
+                given_name, family_name).encode('ascii', errors='egd')
+        
+        new_rel_player_path = os.path.join(PlayerList.path, newfilename)
+        new_fq_player_path = os.path.join(repo.path, new_rel_player_path)
+        os.rename(self.fq_player_path, new_fq_player_path)
+        repo.stage(self.rel_player_path)
+        self.fq_player_path = new_fq_player_path
+        self.rel_player_path = new_rel_player_path
+
     def get_given_name(self):
         return self.get_player_property('given_name')
-    def get_family_name(self):
-        return self.get_player_property('family_name')
+    def set_given_name(self, given_name):
+        self._rename_file(given_name, self.get_player_property('family_name'))
+        self.set_player_property('given_name', given_name)
+
     def get_rank(self):
         return self.get_player_property('rank')
     def set_rank(self, rank):
         self.set_player_property('rank', rank)
 
-    def set_given_name(self, given_name):
-        newfilename = u'{0}_{1}'.format(
-                given_name, self.get_family_name()).encode('ascii', errors='egd')
-        
-        print 'staging',self.rel_player_path
 
-        new_rel_player_path = os.path.join(PlayerList.path, newfilename)
-        new_fq_player_path = os.path.join(repo.path, new_rel_player_path)
-        os.rename(self.fq_player_path, new_fq_player_path)
-        repo.stage(self.rel_player_path)
-        self.fq_player_path = new_fq_player_path
-        self.rel_player_path = new_rel_player_path
-
-        self.set_player_property('given_name', given_name)
-
+    def get_family_name(self):
+        return self.get_player_property('family_name')
     def set_family_name(self, family_name):
-        newfilename = u'{0}_{1}'.format(
-                self.get_given_name(), family_name).encode('ascii', errors='egd')
-        
-        new_rel_player_path = os.path.join(PlayerList.path, newfilename)
-        new_fq_player_path = os.path.join(repo.path, new_rel_player_path)
-        os.rename(self.fq_player_path, new_fq_player_path)
-        repo.stage(self.rel_player_path)
-        self.fq_player_path = new_fq_player_path
-        self.rel_player_path = new_rel_player_path
+        self._rename_file(self.get_player_property('given_name'), family_name)
 
         self.set_player_property('family_name', family_name)
 
@@ -144,7 +114,7 @@ if __name__ == "__main__":
         os.mkdir('/data/lindroos/pybaduk/turn')
         repo = Repo.init("/data/lindroos/pybaduk/turn")
     p = PlayerList(repo)
-#     print len(p)
+
     p.append({'given_name': u'Robert', 'family_name': u'Åhs'})
     p.append({'given_name': u'Eskil', 'family_name': u'Varenius'})
     p.append({'given_name': u'Lukas', 'family_name': u'Lindroos'})
@@ -152,11 +122,5 @@ if __name__ == "__main__":
     p.append({'given_name': u'Magnus', 'family_name': u'Sandén'})
     p.append({'given_name': u'Niklas', 'family_name': u'Örjansson'})
 
-#     for player in p:
-#         print unicode(player)
-
-    list(p)[0].rank = '6K'
     for player in sorted(list(p), key=lambda player: player.family_name):
-#         player.given_name = 'Jonas'
         print unicode(player)
-#         print player.get_player_property('family_name')
