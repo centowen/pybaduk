@@ -51,32 +51,19 @@ class Player(object):
         self.fq_player_path = new_fq_player_path
         self.rel_player_path = new_rel_player_path
 
-    def get_given_name(self):
-        return self.get_player_property('given_name')
-    def set_given_name(self, given_name):
-        self._rename_file(given_name, self.get_player_property('family_name'))
-        self.set_player_property('given_name', given_name)
+    def __getitem__(self, key):
+        return self.get_player_property(key)
+    def __setitem__(self, key, value):
+        if key == 'given_name':
+            self._rename_file(value, self.get_player_property('family_name'))
+        elif key == 'family_name':
+            self._rename_file(self.get_player_property('given_name'), value)
 
-    def get_rank(self):
-        return self.get_player_property('rank')
-    def set_rank(self, rank):
-        self.set_player_property('rank', rank)
-
-
-    def get_family_name(self):
-        return self.get_player_property('family_name')
-    def set_family_name(self, family_name):
-        self._rename_file(self.get_player_property('given_name'), family_name)
-
-        self.set_player_property('family_name', family_name)
-
-    given_name = property(get_given_name, set_given_name)
-    family_name = property(get_family_name, set_family_name)
-    rank = property(get_rank, set_rank)
+        self.set_player_property(key, value)
 
     def get_player_property(self, key):
         data = json.load(open(self.fq_player_path))
-        return data[key]
+        return data.get(key,None)
 
     def set_player_property(self, key, value):
         data = json.load(open(self.fq_player_path))
@@ -116,11 +103,11 @@ if __name__ == "__main__":
     p = PlayerList(repo)
 
     p.append({'given_name': u'Robert', 'family_name': u'Åhs'})
-    p.append({'given_name': u'Eskil', 'family_name': u'Varenius'})
-    p.append({'given_name': u'Lukas', 'family_name': u'Lindroos'})
+    p.append({'given_name': u'Eskil', 'family_name': u'Varenius', 'rank': '2K'})
+    p.append({'given_name': u'Lukas', 'family_name': u'Lindroos', 'rank': '6K'})
     p.append({'given_name': u'Erik', 'family_name': u'Änterhake'})
-    p.append({'given_name': u'Magnus', 'family_name': u'Sandén'})
+    p.append({'given_name': u'Magnus', 'family_name': u'Sandén', 'rank': '7K'})
     p.append({'given_name': u'Niklas', 'family_name': u'Örjansson'})
 
-    for player in sorted(list(p), key=lambda player: player.family_name):
+    for player in sorted(list(p), key=lambda player: player['family_name']):
         print unicode(player)
