@@ -39,6 +39,8 @@ if __name__ == "__main__":
     for player in players:
         if player['given_name'] == 'Eskil':
             player.remove()
+        elif player['rank'] == '7K':
+            player['family_name'] = 'Andersson'
 
     for player in sorted(players, key=lambda player: player['family_name']):
         print unicode(player)

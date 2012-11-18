@@ -43,7 +43,7 @@ class GitEntry(object):
 
     def _rename_file(self, git_table, new_index):
         new_rel_path = os.path.join(git_table, new_index)
-        new_fq_path = os.path.join(repo.path, new_rel_path)
+        new_fq_path = os.path.join(self.repo.path, new_rel_path)
         os.rename(self.fq_path, new_fq_path)
         self.repo.stage(self.rel_path)
         self.fq_path = new_fq_path
