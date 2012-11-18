@@ -63,11 +63,11 @@ class Player(GitEntry):
         return super(Player, self).__getitem__(key)
 
     def __setitem__(self, key, value):
-        super(Player, self).__setitem__(key, value)
         if key == 'given_name':
             self._rename_file(value, self['family_name'])
         elif key == 'family_name':
             self._rename_file(self['given_name'], value)
+        super(Player, self).__setitem__(key, value)
 
     def __delitem__(self, key):
         if key == 'given_name':
