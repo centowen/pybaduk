@@ -9,7 +9,8 @@ import pairings
 
 
 if __name__ == "__main__":
-    turnpath = '/home/freidrichen/tmp/turn'
+#     turnpath = '/home/freidrichen/tmp/turn'
+    turnpath = '/data/lindroos/pybaduk/turn'
     try:
         repo = Repo(turnpath)
     except dulwich.errors.NotGitRepository, error:
