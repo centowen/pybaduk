@@ -10,12 +10,12 @@ codecs.register_error('egd', egdcodec.egd_replace)
 
 
 class PlayerModError(Exception):
-    def __init__(self, msg):
-        Exception.__init__(self, msg)
+    pass
 
 
 class Player(GitEntry):
     """Class to manage a player with corresponding git file.""" 
+
     def __init__(self, repo, params=None, index=None):
         self.repo = repo
 
@@ -24,14 +24,15 @@ class Player(GitEntry):
                 given_name = params['given_name']
                 family_name = params['family_name']
             except KeyError:
-                raise PlayerModError('Require given_name and family_name for'
-                                     'every player.')
+                raise PlayerModError('Require given_name and family_name'
+                                     'for every player.')
 
         if not index:
             index = u'{0}_{1}'.format(params['given_name'],
-                    params['family_name']).encode('ascii', errors='egd')
+                params['family_name']).encode('ascii', errors='egd')
 
-        super(Player, self).__init__(repo, params=params, git_table=PlayerList.path, index=index)
+        super(Player, self).__init__(repo, params=params,
+            git_table=PlayerList.path, index=index)
 
     def __unicode__(self):
         data = json.load(open(self.fq_path))
@@ -46,27 +47,26 @@ class Player(GitEntry):
         GitEntry._rename_file(self, PlayerList.path, new_index)
 
     def __getitem__(self, key):
-        return self._get_property(key)
+        return self.__getitem__(key)
 
     def __setitem__(self, key, value):
+        super(Player, self).__setitem__(key, value)
         if key == 'given_name':
-            self._rename_file(value, self._get_property('family_name'))
+            self._rename_file(value, self['family_name'])
         elif key == 'family_name':
-            self._rename_file(self._get_property('given_name'), value)
-
-        self._set_property(key, value)
+            self._rename_file(self['given_name'], value)
 
     def __delitem__(self, key):
         if key == 'given_name':
             raise PlayerModError('Can not remove given_name from player.')
         elif key == 'family_name':
             raise PlayerModError('Can not remove family_name from player.')
-
-        self._del_property(key)
+        super(Player, self).__delitem__(key)
 
 
 class PlayerList(object):
     """Class managing a git repository with a list of players."""
+
     path = 'players'
 
     def __init__(self, repo):
@@ -75,6 +75,9 @@ class PlayerList(object):
         self.fq_playerdir_path = os.path.join(repo.path, PlayerList.path)
         if not os.path.isdir(self.fq_playerdir_path):
             os.mkdir(self.fq_playerdir_path)
+
+    def append(self, params):
+        Player(self.repo, params=params)
 
     def __len__(self):
         return len(os.listdir(self.fq_playerdir_path))
@@ -87,8 +90,3 @@ class PlayerList(object):
         if isinstance(index,str):
             return Player(self.repo, index=index)
         return None
-
-    def append(self, params):
-        Player(self.repo, params=params)
-
-

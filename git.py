@@ -3,8 +3,7 @@ import json
 
 
 class GitLoadError(Exception):
-    def __init__(self, msg):
-        Exception.__init__(self, msg)
+    pass
 
 
 class GitEntry(object):
@@ -13,7 +12,8 @@ class GitEntry(object):
         self.repo = repo
         # Checks like this aren't very pythonic:
         # Think duck typing: Anything that supports the subset of str interface
-        # that we use here should be supported by this class.
+        # that we use here should be supported by this class. For example
+        # unicode strings
         #if not isinstance(git_table, str):
         #    raise GitLoadError('Invalid git_table (players, pairings, etc...)'
         #                       'specified.')
@@ -49,18 +49,18 @@ class GitEntry(object):
         self.fq_path = new_fq_path
         self.rel_path = new_rel_path
 
-    def _del_property(self, key):
+    def __delitem__(self, key):
         data = json.load(open(self.fq_path))
         del data[key]
         json.dump(data, open(self.fq_path, 'w'))
         self.repo.stage(self.rel_path)
         self.repo.do_commit('Modifying .', committer = 'Should have some session id here.')
 
-    def _get_property(self, key):
+    def __getitem__(self, key):
         data = json.load(open(self.fq_path))
-        return data.get(key,None)
+        return data.get(key, None)
 
-    def _set_property(self, key, value):
+    def __setitem__(self, key, value):
         data = json.load(open(self.fq_path))
         data[key] = value
         json.dump(data, open(self.fq_path, 'w'))

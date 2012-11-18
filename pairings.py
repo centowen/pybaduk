@@ -3,13 +3,13 @@ import json
 
 from git import GitEntry
 
+
 class PairingModError(Exception):
-    def __init__(self, msg):
-        Exception.__init__(self, msg)
+    pass
 
 
 class Pairing(GitEntry):
-    """Class to manage a player with corresponding git file."""
+    """Class to manage a pairing between two players."""
     def __init__(self, repo, game_round=None, index=None,
                  player1=None, player2=None):
         self.repo = repo
@@ -34,9 +34,9 @@ class Pairing(GitEntry):
         player1_index = data.get('player1')
         player2_index = data.get('player2')
         if player1_index:
-            player1 = Player(self.repo,index=str(player1_index))
+            player1 = Player(self.repo, index=str(player1_index))
         if player2_index:
-            player2 = Player(self.repo,index=str(player2_index))
+            player2 = Player(self.repo, index=str(player2_index))
         return u'{0} vs {1}'.format(unicode(player1), unicode(player2))
 
     def _rename_file(self, game_round, player1, player2):
@@ -44,7 +44,7 @@ class Pairing(GitEntry):
         GitEntry._rename_file(self, PairingList.path, new_index)
 
     def __getitem__(self, key):
-        return self._get_property(key)
+        return super(Pairing, self).__getitem__(key)
 
     def __setitem__(self, key, value):
         if key == 'game_round':
@@ -61,6 +61,7 @@ class Pairing(GitEntry):
             self._rename_file(self['game_round'], self['player1'], value)
 
         self._set_property(key, value)
+
     def __delitem__(self, key):
         self._del_property(key)
 
@@ -91,5 +92,3 @@ class PairingList(object):
         player2 = params.get('player2')
 
         Pairing(self.repo, game_round=game_round, player1=player1, player2=player2)
-
-
