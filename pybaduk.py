@@ -1,46 +1,43 @@
 # -*- coding: utf-8 -*-
-import os.path
+import codecs
 
-from dulwich.repo import Repo
-import dulwich.errors
+import egdcodec
+from tournament import Tournament
 
-import players
-import pairings
+
+codecs.register_error('egd', egdcodec.egd_replace)
 
 
 if __name__ == "__main__":
 #     turnpath = '/home/freidrichen/tmp/turn'
     turnpath = '/data/lindroos/pybaduk/turn'
-    try:
-        repo = Repo(turnpath)
-    except dulwich.errors.NotGitRepository, error:
-        if not os.path.isdir(turnpath):
-            os.mkdir(turnpath)
-        repo = Repo.init(turnpath)
+    gbgopen = Tournament(turnpath, u'Göteborg Open 2013')
 
-    players = players.PlayerList(repo)
-    if len(players) == 0:
+    players = gbgopen.players
+    if not players:
         players.append({'given_name': u'Robert', 'family_name': u'Åhs'})
-        players.append({'given_name': u'Eskil', 'family_name': u'Varenius',
-                        'rank': '4K'})
-        players.append({'given_name': u'Lukas', 'family_name': u'Lindroos',
-                        'rank': '6K'})
+        eskil_id = players.append({'given_name': u'Eskil',
+                                   'family_name': u'Varenius', 'rank': '4K'})
+        lukas_id = players.append({'given_name': u'Lukas', 'family_name': u'Lindroos',
+                                   'rank': '6K'})
         players.append({'given_name': u'Erik', 'family_name': u'Änterhake'})
-        players.append({'given_name': u'Magnus', 'family_name': u'Sandén',
-                        'rank': '7K'})
+        magnus_id = players.append({'given_name': u'Magnus', 'family_name': u'Sandén',
+                                    'rank': '7K'})
         players.append({'given_name': u'Niklas', 'family_name': u'Örjansson'})
 
-    pairinglist = pairings.PairingList(repo)
-    if len(pairinglist) == 0:
-        pairinglist.append({'game_round': 1,
-            'player1': 'Magnus_Sanden', 'player2': 'Eskil_Varenius'})
-        pairinglist.append({'game_round': 1, 'player1': 'Lukas_Lindroos'})
+    round0_pairs = gbgopen.pairings[0]
+    if not round0_pairs:
+        round0_pairs.append(magnus_id, eskil_id)
+        round0_pairs.append(lukas_id)
 
-    for player in players:
-        if player['given_name'] == 'Eskil':
-            player.remove()
-        elif player['rank'] == '7K':
-            player['family_name'] = 'Andersson'
+    #for player in players:
+    #    if player['given_name'] == 'Eskil':
+    #        player.remove()
+    #    elif player['rank'] == '7K':
+    #        player['family_name'] = 'Andersson'
 
     for player in sorted(players, key=lambda player: player['family_name']):
-        print unicode(player)
+        print(unicode(player))
+
+    for pairing in round0_pairs:
+        print(unicode(pairing))

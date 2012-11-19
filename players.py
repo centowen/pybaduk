@@ -1,12 +1,8 @@
 import os.path
 import json
-import codecs
+import glob
 
-import egdcodec
 from git import GitEntry
-
-
-codecs.register_error('egd', egdcodec.egd_replace)
 
 
 class PlayerModError(Exception):
@@ -20,19 +16,33 @@ class Player(GitEntry):
         self.repo = repo
 
         if params:
+            filenames = os.listdir(os.path.join(self.repo.path, PlayerList.path))
+            old_indices = [int(filename.split('_')[0]) for filename in filenames]
+            if old_indices:
+                new_index = max(old_indices) + 1
+            else:
+                new_index = 0
+            self.index = new_index
+
             try:
                 given_name = params['given_name']
                 family_name = params['family_name']
             except KeyError:
                 raise PlayerModError('Require given_name and family_name'
                                      'for every player.')
-
-        if not index:
-            index = u'{0}_{1}'.format(params['given_name'],
+            filename = u'{}_{}_{}'.format(self.index, params['given_name'],
                 params['family_name']).encode('ascii', errors='egd')
+        elif index is not None:
+            self.index = index
+            filename = glob.glob1(os.path.join(self.repo.path, PlayerList.path),
+                                  '{}_*'.format(self.index))[0]
+            #TODO: Error check
+        else:
+            raise ValueError('One of the keyword arguments params '
+                             'or index is required.')
 
         super(Player, self).__init__(repo, params=params,
-            git_table=PlayerList.path, index=index)
+              git_table=PlayerList.path, filename=filename)
 
     def __unicode__(self):
         data = json.load(open(self.fq_path))
@@ -41,13 +51,16 @@ class Player(GitEntry):
         family_name = data['family_name']
         return u'{0} {1} ({2})'.format(given_name, family_name, rank)
 
+    def __str__(self):
+        return unicode(self).encode('ascii', 'egd')
+
     def _rename_file(self, given_name, family_name):
         new_index = u'{0}_{1}'.format(
                 given_name, family_name).encode('ascii', errors='egd')
         GitEntry._rename_file(self, PlayerList.path, new_index)
 
     def __getitem__(self, key):
-        return super(Player,self).__getitem__(key)
+        return super(Player, self).__getitem__(key)
 
     def __setitem__(self, key, value):
         if key == 'given_name':
@@ -77,16 +90,12 @@ class PlayerList(object):
             os.mkdir(self.fq_playerdir_path)
 
     def append(self, params):
-        Player(self.repo, params=params)
+        p = Player(self.repo, params=params)
+        return p.index
 
     def __len__(self):
         return len(os.listdir(self.fq_playerdir_path))
 
     def __iter__(self):
-        for player in os.listdir(self.fq_playerdir_path):
-            yield Player(self.repo, index=player)
-
-    def __getitem__(self, index):
-        if isinstance(index,str):
-            return Player(self.repo, index=index)
-        return None
+        for filename in os.listdir(self.fq_playerdir_path):
+            yield Player(self.repo, index=filename.split('_')[0])
