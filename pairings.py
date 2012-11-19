@@ -72,7 +72,7 @@ class PairingList(object):
 
     def __init__(self, repo):
         self.repo = repo
-        self.fq_pairingdir_path = os.path.join(repo.path, PairingList.path)
+        self.fq_pairingdir_path = os.path.join(self.repo.path, PairingList.path)
         if not os.path.isdir(self.fq_pairingdir_path):
             os.mkdir(self.fq_pairingdir_path)
 
@@ -81,7 +81,7 @@ class PairingList(object):
 
     def __iter__(self):
         for pairing in os.listdir(self.fq_pairingdir_path):
-            yield Pairing(repo, index=pairing)
+            yield Pairing(self.repo, index=pairing)
 
     def append(self, params):
         try:
