@@ -5,6 +5,8 @@ import dulwich.errors
 
 import players
 import pairings
+import codecs
+import egdcodec
 
 
 class Tournament(object):

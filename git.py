@@ -28,9 +28,9 @@ class GitEntry(object):
         return self.getindex()
 
     def remove(self):
+        commit_msg = 'Removing {} {}'.format(type(self).__name__.lower(), self)
         os.remove(self.fq_path)
         self.repo.stage(self.rel_path)
-        commit_msg = 'Removing {} {}'.format(type(self).__name__.lower(), self)
         self.repo.do_commit(commit_msg, committer=self.session_id)
 
     def _rename_file(self, git_table, new_index):
