@@ -5,6 +5,11 @@ import glob
 from git import GitEntry
 
 
+def _generate_filename(params):
+    return u'{0}_{1}'.format(params['given_name'],
+        params['family_name']).encode('ascii', errors='egd')
+
+
 class PlayerModError(Exception):
     pass
 
@@ -22,17 +27,17 @@ class Player(GitEntry):
             except KeyError:
                 raise PlayerModError('Require given_name and family_name'
                                      'for every player.')
-            self.index = self.generate_filename(params)
+            self.player_index = _generate_filename(params)
 
         elif index is not None:
-            self.index = index
+            self.player_index = index
             pass
         else:
             raise ValueError('One of the keyword arguments params '
                              'or index is required.')
 
         super(Player, self).__init__(repo, params=params,
-              git_table=PlayerList.path, filename=self.index)
+              git_table=PlayerList.path, filename=self.player_index)
 
     def __unicode__(self):
         data = json.load(open(self.fq_path))
@@ -40,10 +45,6 @@ class Player(GitEntry):
         given_name = data['given_name']
         family_name = data['family_name']
         return u'{0} {1} ({2})'.format(given_name, family_name, rank)
-
-    def generate_filename(self, params):
-        return u'{0}_{1}'.format(params['given_name'],
-            params['family_name']).encode('ascii', errors='egd')
 
     def __str__(self):
         return unicode(self).encode('ascii', 'egd')
@@ -85,7 +86,7 @@ class PlayerList(object):
 
     def append(self, params):
         p = Player(self.repo, params=params)
-        return p.index
+        return p.player_index
 
     def __len__(self):
         return len(os.listdir(self.fq_playerdir_path))

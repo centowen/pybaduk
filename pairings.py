@@ -9,27 +9,32 @@ class PairingModError(Exception):
     pass
 
 
+def _generate_index(p1_index, p2_index):
+    return '{0}-{1}'.format(p1_index, p2_index)
+
+
 class Pairing(GitEntry):
     """Class to manage a pairing between two players."""
     def __init__(self, repo, path, pairing_index=None,
-                 player1=None, player2=None):
+                 p1_index=None, p2_index=None):
         self.repo = repo
         self.fq_path = path
         params = None
-        if not pairing_index:
-            if not player1 and not player2:
-                raise PairingModError('A pairing must have at least one player')
-            if not player1:
-                player1 = player2
-                player2 = None
-
-            self.index = '{0}-{0}'.format(player1, player2)
-            params ={'player1': player1, 'player2': player2}
-        else:
+        if pairing_index:
             self.index = pairing_index
+        else:
+            if not p1_index and not p2_index:
+                raise PairingModError('A pairing must have at least one player')
+            if not p1_index:
+                p1_index = p2_index
+                p2_index = None
+
+            params ={'player1': p1_index, 'player2': p2_index}
+            self.index = _generate_index(p1_index, p2_index)
 
         GitEntry.__init__(self, repo, params=params,
                 git_table=self.fq_path, filename=self.index)
+
 
     def __unicode__(self):
         data = json.load(open(self.fq_path))
@@ -86,14 +91,14 @@ class PairingList(object):
 
     def append(self, player1, player2=None):
         try:
-            player1 = player1.generate_index()
+            p1_index = player1.player_index
         except AttributeError:
-            pass
+            p1_index = player1
 
         try:
-            player2 = player2.generate_index()
+            p2_index = player2.player_index
         except AttributeError:
-            pass
+            p2_index = player2
 
         Pairing(self.repo, path=self.rel_pairingdir_path, 
-                player1=player1, player2=player2)
+                p1_index=p1_index, p2_index=p2_index)

@@ -43,8 +43,8 @@ if __name__ == "__main__":
             player.remove()
             break
 
-#     for player in sorted(players, key=lambda player: player['family_name']):
-#         print(unicode(player))
+    for player in sorted(players, key=lambda player: player['family_name']):
+        print(unicode(player))
 
     for pairing in round0_pairs:
         print(unicode(pairing))
