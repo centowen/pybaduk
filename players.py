@@ -16,33 +16,23 @@ class Player(GitEntry):
         self.repo = repo
 
         if params:
-            filenames = os.listdir(os.path.join(self.repo.path, PlayerList.path))
-            old_indices = [int(filename.split('_')[0]) for filename in filenames]
-            if old_indices:
-                new_index = max(old_indices) + 1
-            else:
-                new_index = 0
-            self.index = new_index
-
             try:
                 given_name = params['given_name']
                 family_name = params['family_name']
             except KeyError:
                 raise PlayerModError('Require given_name and family_name'
                                      'for every player.')
-            filename = u'{}_{}_{}'.format(self.index, params['given_name'],
-                params['family_name']).encode('ascii', errors='egd')
+            self.index = self.generate_filename(params)
+
         elif index is not None:
             self.index = index
-            filename = glob.glob1(os.path.join(self.repo.path, PlayerList.path),
-                                  '{}_*'.format(self.index))[0]
-            #TODO: Error check
+            pass
         else:
             raise ValueError('One of the keyword arguments params '
                              'or index is required.')
 
         super(Player, self).__init__(repo, params=params,
-              git_table=PlayerList.path, filename=filename)
+              git_table=PlayerList.path, filename=self.index)
 
     def __unicode__(self):
         data = json.load(open(self.fq_path))
@@ -50,6 +40,10 @@ class Player(GitEntry):
         given_name = data['given_name']
         family_name = data['family_name']
         return u'{0} {1} ({2})'.format(given_name, family_name, rank)
+
+    def generate_filename(self, params):
+        return u'{0}_{1}'.format(params['given_name'],
+            params['family_name']).encode('ascii', errors='egd')
 
     def __str__(self):
         return unicode(self).encode('ascii', 'egd')
@@ -98,4 +92,4 @@ class PlayerList(object):
 
     def __iter__(self):
         for filename in os.listdir(self.fq_playerdir_path):
-            yield Player(self.repo, index=filename.split('_')[0])
+            yield Player(self.repo, index=filename)
