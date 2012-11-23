@@ -13,6 +13,7 @@ import egdcodec
 from tournament import Tournament
 
 import locale
+from functools import total_ordering
 
 class MainUIWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -23,6 +24,7 @@ class MainUIWindow(QMainWindow):
         self.ui.setupUi(self)
 
 
+@total_ordering
 class Name(QTableWidgetItem):
     def __init__(self, name):
         super(Name,self).__init__(name)
@@ -35,12 +37,10 @@ class Name(QTableWidgetItem):
     def __str__(self):
         return self.name.encode('ascii', errors='egd')
     
+    def __eq__(self, other_name):
+        return locale.strcoll(self.name, other_name.name) == 0
+
     def __lt__(self, other_name):
-#         if self.name[0] == u'Å':
-#             return True
-#         if other_name[0] == u'Å':
-#                 return False
-#         locale.setlocale(locale.LC_ALL, "sv_SE.UTF-8")
         return locale.strcoll(self.name, other_name.name) < 0
 
 
