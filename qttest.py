@@ -12,6 +12,8 @@ import codecs
 import egdcodec
 from tournament import Tournament
 
+import locale
+
 class MainUIWindow(QMainWindow):
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
@@ -19,6 +21,27 @@ class MainUIWindow(QMainWindow):
         self.ui = Ui_MainWindow()
 
         self.ui.setupUi(self)
+
+
+class Name(QTableWidgetItem):
+    def __init__(self, name):
+        super(Name,self).__init__(name)
+        self.name = name
+        locale.setlocale(locale.LC_ALL, "sv_SE.UTF-8")
+
+    def __unicode__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name.encode('ascii', errors='egd')
+    
+    def __lt__(self, other_name):
+#         if self.name[0] == u'Å':
+#             return True
+#         if other_name[0] == u'Å':
+#                 return False
+#         locale.setlocale(locale.LC_ALL, "sv_SE.UTF-8")
+        return locale.strcoll(self.name, other_name.name) < 0
 
 
 codecs.register_error('egd', egdcodec.egd_replace)
@@ -37,8 +60,10 @@ def main():
     myapp.ui.tableWidget.setHorizontalHeaderLabels(['Given name', 'Family name', 'Rank'])
     for (i,player) in enumerate(sorted(playerlist, key=lambda player: player['family_name'])):
 #         QTableWidgetItem(unicode(player), myapp.ui.tableWidget)
-        family_name = QTableWidgetItem(player['family_name'])
-        given_name = QTableWidgetItem(player['given_name'])
+        family_name = Name(player['family_name'])
+        given_name = Name(player['given_name'])
+#         family_name = QTableWidgetItem(Name(player['family_name']))
+#         given_name = QTableWidgetItem(Name(player['given_name']))
         rank = player['rank']
         if player['rank'] == None:
             rank = 'No rank'
