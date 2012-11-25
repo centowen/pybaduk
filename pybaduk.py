@@ -11,9 +11,9 @@ codecs.register_error('egd', egdcodec.egd_replace)
 if __name__ == "__main__":
 #     turnpath = '/home/freidrichen/tmp/turn'
     turnpath = '/data/lindroos/pybaduk/turn'
-    gbgopen = Tournament(turnpath, u'Göteborg Open 2013')
+    tournament = Tournament(turnpath, u'Göteborg Open 2013')
 
-    players = gbgopen.players
+    players = tournament.players
     if not players:
         players.append({'given_name': u'Robert', 'family_name': u'Åhs'})
         eskil_id = players.append({'given_name': u'Eskil',
@@ -25,9 +25,9 @@ if __name__ == "__main__":
                                     'rank': '7K'})
         players.append({'given_name': u'Niklas', 'family_name': u'Örjansson'})
 
-    round0_pairs = gbgopen.pairings[0]
+    round0_pairs = tournament.pairings[0]
     if not round0_pairs:
-#         round0_pairs.append(magnus_id, eskil_id)
+        round0_pairs.append(magnus_id, eskil_id)
         round0_pairs.append(lukas_id)
 
     #for player in players:
@@ -36,11 +36,9 @@ if __name__ == "__main__":
     #    elif player['rank'] == '7K':
     #        player['family_name'] = 'Andersson'
 
-    tmp = sorted(players, key=lambda player: player['family_name'])
-    print tmp
-    for player in tmp:
+    for player in players:
         if player['given_name'] == 'Magnus':
-            player.remove()
+            tournament.remove_player(player)
             break
 
     for player in sorted(players, key=lambda player: player['family_name']):
