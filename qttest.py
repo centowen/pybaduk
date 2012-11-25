@@ -4,6 +4,7 @@ import sys
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qttest_ui import Ui_MainWindow
+from player_tab import Ui_PlayerTab
 
 from dulwich.repo import Repo
 import dulwich.errors
@@ -20,6 +21,15 @@ class MainUIWindow(QMainWindow):
         QWidget.__init__(self, parent)
 
         self.ui = Ui_MainWindow()
+
+        self.ui.setupUi(self)
+
+
+class PlayerTab(QWidget):
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
+
+        self.ui = Ui_PlayerTab()
 
         self.ui.setupUi(self)
 
@@ -53,11 +63,15 @@ def main():
     gbgopen = Tournament(turnpath, u'Göteborg Open 2013')
 
     myapp = MainUIWindow()
+    playerTab = PlayerTab()
     playerlist = gbgopen.players
-    myapp.ui.tableWidget.setRowCount(len(playerlist))
-    myapp.ui.tableWidget.setColumnCount(3)
-    myapp.ui.tableWidget.verticalHeader().hide()
-    myapp.ui.tableWidget.setHorizontalHeaderLabels(['Given name', 'Family name', 'Rank'])
+    playerTab.ui.tableWidget.setRowCount(len(playerlist))
+    playerTab.ui.tableWidget.setColumnCount(3)
+    playerTab.ui.tableWidget.verticalHeader().hide()
+    playerTab.ui.tableWidget.setHorizontalHeaderLabels(['Given name', 'Family name', 'Rank'])
+
+    myapp.ui.tabWidget.clear()
+    myapp.ui.tabWidget.addTab(playerTab, "Players")
     for (i,player) in enumerate(sorted(playerlist, key=lambda player: player['family_name'])):
 #         QTableWidgetItem(unicode(player), myapp.ui.tableWidget)
         family_name = Name(player['family_name'])
@@ -68,11 +82,11 @@ def main():
         if player['rank'] == None:
             rank = 'No rank'
         rank = QTableWidgetItem(rank)
-        myapp.ui.tableWidget.setItem(i, 0, given_name)
-        myapp.ui.tableWidget.setItem(i, 1, family_name)
-        myapp.ui.tableWidget.setItem(i, 2, rank)
-    myapp.ui.tableWidget.resizeColumnsToContents()
-    myapp.ui.tableWidget.horizontalHeader().setStretchLastSection(True)
+        playerTab.ui.tableWidget.setItem(i, 0, given_name)
+        playerTab.ui.tableWidget.setItem(i, 1, family_name)
+        playerTab.ui.tableWidget.setItem(i, 2, rank)
+    playerTab.ui.tableWidget.resizeColumnsToContents()
+    playerTab.ui.tableWidget.horizontalHeader().setStretchLastSection(True)
     myapp.show()
     sys.exit(app.exec_())
 #   a = QApplication(sys.argv)
