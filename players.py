@@ -70,6 +70,10 @@ class Player(GitEntry):
         elif key == 'family_name':
             raise PlayerModError('Can not remove family_name from player.')
         super(Player, self).__delitem__(key)
+    
+    def __eq__(self, other):
+        """Compare players by index."""
+        return self.player_index == other.player_index
 
 
 class PlayerList(object):
@@ -83,6 +87,9 @@ class PlayerList(object):
         self.fq_playerdir_path = os.path.join(repo.path, PlayerList.path)
         if not os.path.isdir(self.fq_playerdir_path):
             os.mkdir(self.fq_playerdir_path)
+
+    def __getitem__(self, index):
+        return Player(self.repo, index=index)
 
     def append(self, params):
         p = Player(self.repo, params=params)
