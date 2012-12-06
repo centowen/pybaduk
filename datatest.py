@@ -17,12 +17,12 @@ if __name__ == "__main__":
     if not players:
         players.append({'given_name': u'Robert', 'family_name': u'Åhs'})
         eskil_id = players.append({'given_name': u'Eskil',
-                                   'family_name': u'Varenius', 'rank': '4K'})
+            'family_name': u'Varenius', 'rank': '4K', 'club': 'Gote'})
         lukas_id = players.append({'given_name': u'Lukas', 'family_name': u'Lindroos',
                                    'rank': '6K'})
         players.append({'given_name': u'Erik', 'family_name': u'Änterhake'})
         magnus_id = players.append({'given_name': u'Magnus', 'family_name': u'Sandén',
-                                    'rank': '7K'})
+            'rank': '7K', 'club': u'Göteborg'})
         players.append({'given_name': u'Niklas', 'family_name': u'Örjansson'})
 
     round0_pairs = tournament.pairings[0]

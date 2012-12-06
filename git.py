@@ -55,9 +55,13 @@ class GitEntry(object):
         self.repo.stage(self.rel_path)
         self.repo.do_commit('Modifying .', committer=self.session_id)
 
+    def get(self, key, default=None):
+        data = json.load(open(self.fq_path))
+        return data.get(key, default)
+
     def __getitem__(self, key):
         data = json.load(open(self.fq_path))
-        return data.get(key, None)
+        return data[key]
 
     def __setitem__(self, key, value):
         data = json.load(open(self.fq_path))

@@ -54,6 +54,9 @@ class Player(GitEntry):
                 given_name, family_name).encode('ascii', errors='egd')
         GitEntry._rename_file(self, PlayerList.path, new_index)
 
+    def get(self, key, default=None):
+        return super(Player, self).get(key, default)
+
     def __getitem__(self, key):
         return super(Player, self).__getitem__(key)
 
