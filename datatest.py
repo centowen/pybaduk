@@ -1,16 +1,25 @@
 # -*- coding: utf-8 -*-
+import os
 import codecs
 
 import egdcodec
 from tournament import Tournament
+from PyQt4.QtCore import QSettings
 
 
 codecs.register_error('egd', egdcodec.egd_replace)
 
 
 if __name__ == "__main__":
-#     turnpath = '/home/freidrichen/tmp/turn'
-    turnpath = '/data/lindroos/pybaduk/turn'
+    settings = QSettings('weirdo', 'pybaduk')
+
+    turnpath = str(settings.value('turnpath').toString())
+    if turnpath == '':
+        turnpath = './turn'
+        settings.setValue('turnpath', turnpath)
+    if not (os.path.exists(turnpath)):
+        os.makedirs(turnpath)
+    print turnpath
     tournament = Tournament(turnpath, u'Göteborg Open 2013')
 
     players = tournament.players

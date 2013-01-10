@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import codecs
 import sys
+import os
 
-from PyQt4.QtCore import QTimer
+from PyQt4.QtCore import QTimer, QSettings
 from PyQt4.QtGui import QMainWindow, QWidget, QApplication
 from dulwich.repo import Repo
 import dulwich.errors
@@ -32,7 +33,12 @@ class MainWindow(QMainWindow):
 def main():
     app = QApplication(sys.argv)
 
-    turnpath = '/data/lindroos/pybaduk/turn'
+    settings = QSettings('weirdo', 'pybaduk')
+
+    turnpath = str(settings.value('turnpath').toString())
+    if turnpath == '':
+        turnpath = './turn'
+        settings.setValue('turnpath', turnpath)
     gbgopen = Tournament(turnpath, u'Göteborg Open 2013')
 
     mainwindow = MainWindow()
@@ -40,7 +46,7 @@ def main():
     updatetimer.timeout.connect(mainwindow.updatetabs)
     updatetimer.start(500)
 
-    playerTab = PlayerTab(gbgopen)
+    playerTab = PlayerTab(gbgopen, settings)
     mainwindow.ui.tabWidget.clear()
     mainwindow.ui.tabWidget.addTab(playerTab, "Players")
     mainwindow.show()

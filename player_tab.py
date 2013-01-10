@@ -2,6 +2,7 @@ from functools import total_ordering
 import locale
 
 from PyQt4.QtGui import QWidget, QTableWidgetItem, QTableWidgetSelectionRange
+from PyQt4.QtCore import QSettings
 
 from player_tab_ui import Ui_PlayerTab
 from players import Player
@@ -33,11 +34,14 @@ playerUiRepr = {'given_name': {'label': 'Given name', 'tabletype': OrderedName},
                 'index': {'label': 'Index', 'tabletype': QTableWidgetItem}}
 
 class PlayerTab(QWidget):
-    def __init__(self, tournament, parent=None):
+    def __init__(self, tournament, settings, parent=None):
         QWidget.__init__(self, parent)
         self.tournament = tournament
-
-        self.table_columns = ['given_name', 'family_name', 'rank', 'club']
+        self.settings = settings
+        self.table_columns = [str(column.toString()) for column in settings.value('table_columns').toList()]
+        if len(self.table_columns)==0:
+                settings.setValue('table_columns', ['given_name', 'family_name', 'rank', 'club'])
+                self.table_columns = [str(column.toString()) for column in settings.value('table_columns').toList()]
 
         self.ui = Ui_PlayerTab()
         self.ui.setupUi(self)
