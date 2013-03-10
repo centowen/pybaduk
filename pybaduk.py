@@ -8,7 +8,7 @@ import egdcodec
 
 from qttest_ui import Ui_MainWindow
 from player_tab import PlayerTab
-from tournament import Tournament
+from tournament import Tournament, Field
 
 
 codecs.register_error('egd', egdcodec.egd_replace)
@@ -37,16 +37,13 @@ def main():
         turnpath = './turn'
         settings.setValue('turnpath', turnpath)
     gbgopen = Tournament(turnpath, u'Göteborg Open 2013')
-#    gbgopen.add_extra_player_field((u'Clöbb', unicode))
-    gbgopen.add_extra_player_field((u'Has päjd', bool))
-    #gbgopen.remove_extra_player_field(u'Has paid')
 
     mainwindow = MainWindow()
     updatetimer = QTimer()
     updatetimer.timeout.connect(mainwindow.updatetabs)
     updatetimer.start(500)
 
-    playerTab = PlayerTab(gbgopen, settings)
+    playerTab = PlayerTab(gbgopen)
     mainwindow.ui.tabWidget.clear()
     mainwindow.ui.tabWidget.addTab(playerTab, "Players")
     mainwindow.show()

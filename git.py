@@ -1,17 +1,17 @@
 import os.path
-import json
+import pickle
 
 
 class GitLoadError(Exception):
     pass
 
 
-def json_load(filename):
-    return json.load(open(filename, 'r'))
+def load_file(filename):
+    return pickle.load(open(filename, 'r'))
 
 
-def json_dump(data, filename):
-    json.dump(data, open(filename, 'w'), indent=4, sort_keys=True)
+def dump_file(data, filename):
+    pickle.dump(data, open(filename, 'w'))
 
 
 class GitEntry(object):
@@ -26,7 +26,7 @@ class GitEntry(object):
         self.fq_path = os.path.join(repo.path, self.rel_path) 
 
         if params:
-            json_dump(params, self.fq_path)
+            dump_file(params, self.fq_path)
             repo.stage(self.rel_path)
             repo.do_commit('Updating entry {0} in {1}.'.format(
                 filename, git_table), committer=self.session_id)
@@ -55,27 +55,27 @@ class GitEntry(object):
         self.repo.do_commit(commit_msg, committer=self.session_id)
 
     def items(self):
-        data = json_load(self.fq_path)
+        data = load_file(self.fq_path)
         return data.items()
 
     def __delitem__(self, key):
-        data = json_load(self.fq_path)
+        data = load_file(self.fq_path)
         del data[key]
-        json_dump(data, self.fq_path)
+        dump_file(data, self.fq_path)
         self.repo.stage(self.rel_path)
         self.repo.do_commit('Modifying .', committer=self.session_id)
 
     def get(self, key, default=None):
-        data = json_load(self.fq_path)
+        data = load_file(self.fq_path)
         return data.get(key, default)
 
     def __getitem__(self, key):
-        data = json_load(self.fq_path)
+        data = load_file(self.fq_path)
         return data[key]
 
     def __setitem__(self, key, value):
-        data = json_load(self.fq_path)
+        data = load_file(self.fq_path)
         data[key] = value
-        json_dump(data, self.fq_path)
+        dump_file(data, self.fq_path)
         self.repo.stage(self.rel_path)
         self.repo.do_commit('Modifying .', committer=self.session_id)

@@ -2,8 +2,6 @@ from functools import total_ordering
 import locale
 
 from PyQt4.QtGui import QWidget, QTableWidgetItem, QTableWidgetSelectionRange
-from PyQt4.QtCore import QSettings
-
 from player_tab_ui import Ui_PlayerTab
 from players import Player
 
@@ -20,28 +18,18 @@ class OrderedName(QTableWidgetItem):
 
     def __str__(self):
         return self.name.encode('ascii', errors='egd')
-    
+
     def __eq__(self, other_name):
         return locale.strcoll(self.name, other_name.name) == 0
 
     def __lt__(self, other_name):
         return locale.strcoll(self.name, other_name.name) < 0
 
-playerUiRepr = {'given_name': {'label': 'Given name', 'tabletype': OrderedName}, 
-                'family_name': {'label': 'Family name', 'tabletype': OrderedName}, 
-                'rank': {'label': 'Rank', 'tabletype': QTableWidgetItem, 'default': 'No rank'},
-                'club': {'label': 'Club', 'tabletype': OrderedName, 'default': 'Homeless'},
-                'index': {'label': 'Index', 'tabletype': QTableWidgetItem}}
 
 class PlayerTab(QWidget):
-    def __init__(self, tournament, settings, parent=None):
+    def __init__(self, tournament, parent=None):
         QWidget.__init__(self, parent)
         self.tournament = tournament
-        self.settings = settings
-        self.table_columns = [str(column.toString()) for column in settings.value('table_columns').toList()]
-        if len(self.table_columns)==0:
-            settings.setValue('table_columns', ['given_name', 'family_name', 'rank', 'club'])
-            self.table_columns = [str(column.toString()) for column in settings.value('table_columns').toList()]
 
         self.ui = Ui_PlayerTab()
         self.ui.setupUi(self)
@@ -71,21 +59,37 @@ class PlayerTab(QWidget):
 
         tableWidget.clear()
         tableWidget.setRowCount(len(self.tournament.players))
-        local_columns = ['index'] + self.table_columns
-        tableWidget.setColumnCount(len(local_columns))
-        tableWidget.setHorizontalHeaderLabels([playerUiRepr[column]['label'] for column in local_columns])
+
+        table_header = ['player_index']
+        for field in self.tournament.config['player_fields']:
+            if field.visible:
+                table_header.append(field.name)
+
+        # Add player index as column zero but don't show it.
+        tableWidget.setColumnCount(len(table_header))
+        tableWidget.setHorizontalHeaderLabels(table_header)
         tableWidget.setColumnHidden(0, True)
 
         for i, player in enumerate(self.tournament.players):
-            for (col_index, col_name) in enumerate(local_columns):
-                defaultForField = playerUiRepr[col_name].get('default', '')
-                field = playerUiRepr[col_name]['tabletype'](player.get(col_name, defaultForField))
-                tableWidget.setItem(i, col_index, field)
+            print player.player_index
+            for col_index, col_name in enumerate(table_header):
+                if col_index == 0:
+                    cell_value = player.player_index
+                else:
+                    print col_name
+                    print player[col_name]
+                    cell_value = player[col_name]
+
+                if isinstance(cell_value, bool):
+                    cell_value = unicode(cell_value)
+
+                tableWidget.setItem(i, col_index, QTableWidgetItem(cell_value))
 
             if player in selectedPlayers:
                 selRange = QTableWidgetSelectionRange(
                             i, 0, i, tableWidget.columnCount() - 1)
                 tableWidget.setRangeSelected(selRange, True)
+            print
 
         tableWidget.setSortingEnabled(True)
         tableWidget.setCurrentCell(currentRow, currentColumn)

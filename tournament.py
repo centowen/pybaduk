@@ -7,6 +7,17 @@ import players
 import pairings
 import codecs
 import egdcodec
+from git import GitEntry
+
+
+class Field(object):
+    def __init__(self, name, datatype, visible=True):
+        self.name = name
+        self.datatype = datatype
+        self.visible = visible
+
+    def __eq__(self, other):
+        return self.name == other.name
 
 
 class RemovePlayerError(Exception):
@@ -19,11 +30,31 @@ class RemovePlayerError(Exception):
         self.pairings = pairings
 
 
+class TournamentConfig(GitEntry):
+    def __init__(self, repo, name, *args, **kwargs):
+        self.repo = repo
+        filename = 'tournament.conf'
+
+        if not os.path.isfile(os.path.join(repo.path, filename)):
+            params = {
+                    'name': name,
+                    'player_fields': [Field(u'Given name', unicode),
+                                      Field(u'Family name', unicode),
+                                      Field(u'Rank', unicode)]}
+        else:
+            params = None
+
+        super(TournamentConfig, self).__init__(
+            repo, params=params, git_table='.',
+            filename=filename, *args, **kwargs)
+
+
 class Tournament(object):
     """Manages a tournament and its players, pairings and results."""
 
-    def __init__(self, path, name, game_rounds=1):
+    def __init__(self, path, name, *args, **kwargs):
         try:
+            #TODO: Should this be done here? Or at all?
             name = name.encode('ascii', 'egd')
         except AttributeError:
             pass
@@ -31,67 +62,54 @@ class Tournament(object):
         self.repopath = os.path.join(path, name)
         try:
             repo = Repo(self.repopath)
+            #TODO: Check that there is an tournament.conf file
         except dulwich.errors.NotGitRepository:
             if not os.path.isdir(self.repopath):
                 os.mkdir(self.repopath)
             repo = Repo.init(self.repopath)
 
+        self.config = TournamentConfig(repo, name)
         self._players = players.PlayerList(repo)
-        if self._players:
-            self._extra_player_fields = self._players[0].get_extra_fields()
-        else:
-            self._extra_player_fields = []
-        if not os.path.isdir(os.path.join(self.repopath, 'pairings')):
-            os.mkdir(os.path.join(self.repopath, 'pairings'))
-        self._pairings = []
-        for game_round in range(game_rounds):
-            path = os.path.join('pairings', 'round{}'.format(game_round))
-            self._pairings.append(pairings.PairingList(repo, path))
+        #if not os.path.isdir(os.path.join(self.repopath, 'pairings')):
+        #    os.mkdir(os.path.join(self.repopath, 'pairings'))
+        #TODO: Obso1337 code
+        #self._pairings = []
+        #for game_round in range(game_rounds):
+        #    path = os.path.join('pairings', 'round{}'.format(game_round))
+        #    self._pairings.append(pairings.PairingList(repo, path))
 
-    def add_extra_player_field(self, field):
-        """
-        Add an extra field to each player. The field is specified as a
-        tuple with name and type.
-        """
-        if field in self._extra_player_fields:
+    def add_player_field(self, field):
+        """Add a field to each player."""
+        if field in self.config['player_fields']:
             raise KeyError((u'Field name {0} already exists in players '
-                            u'table.').format(field[0]))
+                            u'table.').format(field.name))
 
-        self._extra_player_fields.append(field)
+        #TODO: Create a special class for self.config['player_fields']
+        temp = self.config['player_fields']
+        self.config['player_fields'] = temp + [field]
         for player in self._players:
             # Set field value to default for this type
-            player[field[0]] = field[1]()
+            player[field.name] = field.datatype()
 
-    def remove_extra_player_field(self, fieldname):
-        """Remove an extra field from each player."""
-        for field in self._extra_player_fields:
-            print fieldname, field[0], fieldname == field[0]
-            if field[0] == fieldname:
-                self._extra_player_fields.remove(field)
+    def remove_player_field(self, fieldname):
+        """Remove a field from each player."""
+        for i, field in enumerate(self.config['player_fields']):
+            if field.name == fieldname:
+                #TODO: Create a special class for self.config['player_fields']
+                temp = self.config['player_fields']
+                del temp[i]
+                self.config['player_fields'] = temp
                 break
         else:
             raise KeyError((u"Field name {0} doesn't exists in players "
                             u"table.").format(fieldname))
 
         for player in self._players:
-            # Set field value to default for this type
             del player[fieldname]
 
-    def get_extra_player_fields(self):
-        """
-        Return a list of extra player fields. Each field is specified as a
-        tuple with name and type.
-        """
-        return self._extra_player_fields
-
     def get_player_fields(self):
-        """
-        Return a list of all player fields. Each field is specified as a
-        tuple with name and type.
-        """
-        required_fields = [(name, unicode)
-                           for name in Player.required_fields] 
-        return required_fields + self.get_extra_player_fields()
+        """Return a list of player fields."""
+        return self.config['player_fields']
 
     def add_player(self, params):
         self._players.append(params)

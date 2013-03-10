@@ -1,12 +1,11 @@
 import os.path
-import json
 
 from git import GitEntry
 
 
 def _generate_filename(params):
-    return u'{0}_{1}'.format(params['given_name'],
-        params['family_name']).encode('ascii', errors='egd')
+    return u'{0}_{1}'.format(params['Given name'],
+        params['Family name']).encode('ascii', errors='egd')
 
 
 class PlayerModError(Exception):
@@ -19,7 +18,7 @@ class Player(GitEntry):
     # TODO: Perhaps should be called req_field_names instead since
     # type is not included here but now instead constructed in 
     # get_player_fields.
-    required_fields = [u'given_name', u'family_name', u'rank']
+    required_fields = [u'Given name', u'Family name', u'Rank']
 
     def __init__(self, repo, params=None, index=None, *args, **kwargs):
         self.repo = repo
@@ -41,10 +40,9 @@ class Player(GitEntry):
             filename=self.player_index, *args, **kwargs)
 
     def __unicode__(self):
-        data = json.load(open(self.fq_path))
-        rank = data['rank']
-        given_name = data['given_name']
-        family_name = data['family_name']
+        rank = self['Rank']
+        given_name = self['Given name']
+        family_name = self['Family name']
         return u'{0} {1} ({2})'.format(given_name, family_name, rank)
 
     def __str__(self):
@@ -55,28 +53,11 @@ class Player(GitEntry):
                 given_name, family_name).encode('ascii', errors='egd')
         GitEntry._rename_file(self, PlayerList.path, new_index)
 
-    def get_extra_fields(self):
-        extra_fields = []
-        fields = super(Player, self).items()
-        for name, value in fields:
-            if name in Player.required_fields:
-                continue
-            else:
-                extra_fields.append((name, type(value)))
-
-        return extra_fields
-
-    def get(self, field, default=None):
-        return super(Player, self).get(field, default)
-
-    def __getitem__(self, field):
-        return super(Player, self).__getitem__(field)
-
     def __setitem__(self, field, value):
-        if field == 'given_name':
-            self._rename_file(value, self['family_name'])
-        elif field == 'family_name':
-            self._rename_file(self['given_name'], value)
+        if field == 'Given name':
+            self._rename_file(value, self['Family name'])
+        elif field == 'Family name':
+            self._rename_file(self['Given name'], value)
         super(Player, self).__setitem__(field, value)
 
     def __delitem__(self, field):
@@ -102,10 +83,8 @@ class PlayerList(object):
         if not os.path.isdir(self.fq_playerdir_path):
             os.mkdir(self.fq_playerdir_path)
 
-    def __getitem__(self, i):
-        for j, filename in enumerate(os.listdir(self.fq_playerdir_path)):
-            if i == j:
-                return Player(self.repo, index=filename)
+    def __getitem__(self, index):
+        return Player(self.repo, index=index)
 
     def append(self, params):
         p = Player(self.repo, params=params)
