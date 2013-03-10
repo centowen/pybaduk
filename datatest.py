@@ -14,7 +14,7 @@ if __name__ == "__main__":
     settings = QSettings('weirdo', 'pybaduk')
 
     turnpath = str(settings.value('turnpath').toString())
-    if turnpath == '':
+    if not turnpath:
         turnpath = './turn'
         settings.setValue('turnpath', turnpath)
     if not (os.path.exists(turnpath)):
@@ -24,15 +24,12 @@ if __name__ == "__main__":
 
     players = tournament.players
     if not players:
-        players.append({'given_name': u'Robert', 'family_name': u'Åhs'})
-        eskil_id = players.append({'given_name': u'Eskil',
-            'family_name': u'Varenius', 'rank': '4K', 'club': 'Gote'})
-        lukas_id = players.append({'given_name': u'Lukas', 'family_name': u'Lindroos',
-                                   'rank': '6K'})
-        players.append({'given_name': u'Erik', 'family_name': u'Änterhake'})
-        magnus_id = players.append({'given_name': u'Magnus', 'family_name': u'Sandén',
-            'rank': '7K', 'club': u'Göteborg'})
-        players.append({'given_name': u'Niklas', 'family_name': u'Örjansson'})
+        players.append({'given_name': u'Robert', 'family_name': u'Åhs', 'rank': '1K'})
+        eskil_id = players.append({'given_name': u'Eskil', 'family_name': u'Varenius', 'rank': '4K'})
+        lukas_id = players.append({'given_name': u'Lukas', 'family_name': u'Lindroos', 'rank': '6K'})
+        players.append({'given_name': u'Erik', 'family_name': u'Änterhake', 'rank': '30K'})
+        magnus_id = players.append({'given_name': u'Magnus', 'family_name': u'Sandén', 'rank': '7K'})
+        players.append({'given_name': u'Niklas', 'family_name': u'Örjansson', 'rank': '2D'})
 
     round0_pairs = tournament.pairings[0]
     if not round0_pairs:

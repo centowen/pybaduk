@@ -37,12 +37,61 @@ class Tournament(object):
             repo = Repo.init(self.repopath)
 
         self._players = players.PlayerList(repo)
+        if self._players:
+            self._extra_player_fields = self._players[0].get_extra_fields()
+        else:
+            self._extra_player_fields = []
         if not os.path.isdir(os.path.join(self.repopath, 'pairings')):
             os.mkdir(os.path.join(self.repopath, 'pairings'))
         self._pairings = []
         for game_round in range(game_rounds):
             path = os.path.join('pairings', 'round{}'.format(game_round))
             self._pairings.append(pairings.PairingList(repo, path))
+
+    def add_extra_player_field(self, field):
+        """
+        Add an extra field to each player. The field is specified as a
+        tuple with name and type.
+        """
+        if field in self._extra_player_fields:
+            raise KeyError((u'Field name {0} already exists in players '
+                            u'table.').format(field[0]))
+
+        self._extra_player_fields.append(field)
+        for player in self._players:
+            # Set field value to default for this type
+            player[field[0]] = field[1]()
+
+    def remove_extra_player_field(self, fieldname):
+        """Remove an extra field from each player."""
+        for field in self._extra_player_fields:
+            print fieldname, field[0], fieldname == field[0]
+            if field[0] == fieldname:
+                self._extra_player_fields.remove(field)
+                break
+        else:
+            raise KeyError((u"Field name {0} doesn't exists in players "
+                            u"table.").format(fieldname))
+
+        for player in self._players:
+            # Set field value to default for this type
+            del player[fieldname]
+
+    def get_extra_player_fields(self):
+        """
+        Return a list of extra player fields. Each field is specified as a
+        tuple with name and type.
+        """
+        return self._extra_player_fields
+
+    def get_player_fields(self):
+        """
+        Return a list of all player fields. Each field is specified as a
+        tuple with name and type.
+        """
+        required_fields = [(name, unicode)
+                           for name in Player.required_fields] 
+        return required_fields + self.get_extra_player_fields()
 
     def add_player(self, params):
         self._players.append(params)

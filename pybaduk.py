@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 import codecs
 import sys
-import os
 
 from PyQt4.QtCore import QTimer, QSettings
 from PyQt4.QtGui import QMainWindow, QWidget, QApplication
-from dulwich.repo import Repo
-import dulwich.errors
 import egdcodec
 
 from qttest_ui import Ui_MainWindow
@@ -40,6 +37,9 @@ def main():
         turnpath = './turn'
         settings.setValue('turnpath', turnpath)
     gbgopen = Tournament(turnpath, u'Göteborg Open 2013')
+#    gbgopen.add_extra_player_field((u'Clöbb', unicode))
+    gbgopen.add_extra_player_field((u'Has päjd', bool))
+    #gbgopen.remove_extra_player_field(u'Has paid')
 
     mainwindow = MainWindow()
     updatetimer = QTimer()

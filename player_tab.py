@@ -40,8 +40,8 @@ class PlayerTab(QWidget):
         self.settings = settings
         self.table_columns = [str(column.toString()) for column in settings.value('table_columns').toList()]
         if len(self.table_columns)==0:
-                settings.setValue('table_columns', ['given_name', 'family_name', 'rank', 'club'])
-                self.table_columns = [str(column.toString()) for column in settings.value('table_columns').toList()]
+            settings.setValue('table_columns', ['given_name', 'family_name', 'rank', 'club'])
+            self.table_columns = [str(column.toString()) for column in settings.value('table_columns').toList()]
 
         self.ui = Ui_PlayerTab()
         self.ui.setupUi(self)
