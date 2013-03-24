@@ -71,13 +71,10 @@ class PlayerTab(QWidget):
         tableWidget.setColumnHidden(0, True)
 
         for i, player in enumerate(self.tournament.players):
-            print player.player_index
             for col_index, col_name in enumerate(table_header):
                 if col_index == 0:
                     cell_value = player.player_index
                 else:
-                    print col_name
-                    print player[col_name]
                     cell_value = player[col_name]
 
                 if isinstance(cell_value, bool):
@@ -89,7 +86,6 @@ class PlayerTab(QWidget):
                 selRange = QTableWidgetSelectionRange(
                             i, 0, i, tableWidget.columnCount() - 1)
                 tableWidget.setRangeSelected(selRange, True)
-            print
 
         tableWidget.setSortingEnabled(True)
         tableWidget.setCurrentCell(currentRow, currentColumn)
