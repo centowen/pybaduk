@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>741</width>
-    <height>560</height>
+    <height>570</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -49,7 +49,7 @@ Preliminary: 0</string>
            </spacer>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton">
+           <widget class="QPushButton" name="add_player">
             <property name="enabled">
              <bool>true</bool>
             </property>
@@ -105,12 +105,12 @@ Preliminary: 0</string>
              <string>Given name</string>
             </property>
             <property name="buddy">
-             <cstring>lineEdit</cstring>
+             <cstring>given_name</cstring>
             </property>
            </widget>
           </item>
           <item row="0" column="2">
-           <widget class="QLineEdit" name="lineEdit"/>
+           <widget class="QLineEdit" name="given_name"/>
           </item>
           <item row="2" column="0">
            <widget class="QLabel" name="label_4">
@@ -118,7 +118,7 @@ Preliminary: 0</string>
              <string>Rank</string>
             </property>
             <property name="buddy">
-             <cstring>comboBox</cstring>
+             <cstring>rank</cstring>
             </property>
            </widget>
           </item>
@@ -128,12 +128,12 @@ Preliminary: 0</string>
              <string>Family name</string>
             </property>
             <property name="buddy">
-             <cstring>lineEdit_2</cstring>
+             <cstring>family_name</cstring>
             </property>
            </widget>
           </item>
           <item row="1" column="2">
-           <widget class="QLineEdit" name="lineEdit_2"/>
+           <widget class="QLineEdit" name="family_name"/>
           </item>
           <item row="6" column="2">
            <widget class="QPlainTextEdit" name="plainTextEdit"/>
@@ -158,7 +158,7 @@ Preliminary: 0</string>
            <widget class="QWidget" name="widget_4" native="true">
             <layout class="QHBoxLayout" name="horizontalLayout_3">
              <item>
-              <widget class="QComboBox" name="comboBox">
+              <widget class="QComboBox" name="rank">
                <property name="editable">
                 <bool>true</bool>
                </property>
@@ -262,7 +262,7 @@ Preliminary: 0</string>
               </spacer>
              </item>
              <item>
-              <widget class="QDialogButtonBox" name="buttonBox">
+              <widget class="QDialogButtonBox" name="ok_cancel">
                <property name="standardButtons">
                 <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
                </property>
@@ -310,17 +310,17 @@ Preliminary: 0</string>
  </widget>
  <tabstops>
   <tabstop>tableWidget</tabstop>
-  <tabstop>lineEdit</tabstop>
-  <tabstop>lineEdit_2</tabstop>
-  <tabstop>comboBox</tabstop>
+  <tabstop>given_name</tabstop>
+  <tabstop>family_name</tabstop>
+  <tabstop>rank</tabstop>
   <tabstop>lineEdit_3</tabstop>
   <tabstop>lineEdit_5</tabstop>
   <tabstop>lineEdit_4</tabstop>
   <tabstop>plainTextEdit</tabstop>
-  <tabstop>buttonBox</tabstop>
+  <tabstop>ok_cancel</tabstop>
   <tabstop>lineEdit_6</tabstop>
   <tabstop>listWidget</tabstop>
-  <tabstop>pushButton</tabstop>
+  <tabstop>add_player</tabstop>
  </tabstops>
  <resources/>
  <connections/>

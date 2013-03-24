@@ -11,10 +11,14 @@ from git import GitEntry
 
 
 class Field(object):
-    def __init__(self, name, datatype, visible=True):
+    def __init__(self, name, datatype, visible=True, default=None):
         self.name = name
         self.datatype = datatype
         self.visible = visible
+        if default == None:
+            self.default = datatype()
+        else:
+            self.default = default
 
     def __eq__(self, other):
         return self.name == other.name
@@ -40,7 +44,7 @@ class TournamentConfig(GitEntry):
                     'name': name,
                     'player_fields': [Field(u'Given name', unicode),
                                       Field(u'Family name', unicode),
-                                      Field(u'Rank', unicode)]}
+                                      Field(u'Rank', unicode, default=u'30K')]}
         else:
             params = None
 
@@ -89,7 +93,7 @@ class Tournament(object):
         self.config['player_fields'] = temp + [field]
         for player in self._players:
             # Set field value to default for this type
-            player[field.name] = field.datatype()
+            player[field.name] = field.default
 
     def remove_player_field(self, fieldname):
         """Remove a field from each player."""
@@ -112,7 +116,11 @@ class Tournament(object):
         return self.config['player_fields']
 
     def add_player(self, params):
-        self._players.append(params)
+        for field in self.config['player_fields']:
+            if field.name not in params:
+                params[field.name] = field.default
+        index = self._players._append(params)
+        return self._players[index]
 
     def add_pairing(self, game_round, player1, player2=None):
         self._pairings[game_round].append(player1, player2)

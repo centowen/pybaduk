@@ -27,9 +27,12 @@ class OrderedName(QTableWidgetItem):
 
 
 class PlayerTab(QWidget):
+
     def __init__(self, tournament, parent=None):
         QWidget.__init__(self, parent)
         self.tournament = tournament
+        self._editedPlayers = set()
+        self._adding_player = False
 
         self.ui = Ui_PlayerTab()
         self.ui.setupUi(self)
@@ -39,6 +42,11 @@ class PlayerTab(QWidget):
         self.ui.tableWidget.verticalHeader().hide()
         self.ui.tableWidget.resizeColumnsToContents()
         self.ui.tableWidget.horizontalHeader().setStretchLastSection(True)
+
+        self.ui.tableWidget.itemSelectionChanged.connect(self.players_selected)
+        self.ui.add_player.clicked.connect(self.add_player_clicked)
+        self.ui.ok_cancel.rejected.connect(self.clear_edited_players)
+        self.ui.ok_cancel.accepted.connect(self.save_edited_players)
 
     def playerAtRow(self, row):
         """Retrieve player object from row number."""
@@ -57,8 +65,13 @@ class PlayerTab(QWidget):
         currentRow = tableWidget.currentRow()
         currentColumn = tableWidget.currentColumn()
 
+        tableWidget.blockSignals(True)
         tableWidget.clear()
-        tableWidget.setRowCount(len(self.tournament.players))
+        tableWidget.blockSignals(False)
+        row_count = len(self.tournament.players)
+        if self._adding_player:
+            row_count += 1
+        tableWidget.setRowCount(row_count)
 
         table_header = ['player_index']
         for field in self.tournament.config['player_fields']:
@@ -82,10 +95,92 @@ class PlayerTab(QWidget):
 
                 tableWidget.setItem(i, col_index, QTableWidgetItem(cell_value))
 
-            if player in selectedPlayers:
+            if player in selectedPlayers and not self._adding_player:
                 selRange = QTableWidgetSelectionRange(
-                            i, 0, i, tableWidget.columnCount() - 1)
+                    i, 0, i, tableWidget.columnCount() - 1)
+                tableWidget.blockSignals(True)
                 tableWidget.setRangeSelected(selRange, True)
+                tableWidget.blockSignals(False)
+
+        if self._adding_player:
+            tableWidget.blockSignals(True)
+            selRange = QTableWidgetSelectionRange(
+                row_count - 1, 0, row_count - 1, tableWidget.columnCount() - 1)
+            tableWidget.setRangeSelected(selRange, True)
+            tableWidget.blockSignals(False)
 
         tableWidget.setSortingEnabled(True)
-        tableWidget.setCurrentCell(currentRow, currentColumn)
+        #tableWidget.setCurrentCell(currentRow, currentColumn)
+        tableWidget.itemSelectionChanged.emit()
+
+    def players_selected(self):
+        selectedItems = self.ui.tableWidget.selectedItems()
+        selectedRows = set([item.row() for item in selectedItems])
+        selectedPlayers = set([self.playerAtRow(row) for row in selectedRows])
+
+        if self._editedPlayers == selectedPlayers:
+            return
+        else:
+            for edited_player in self._editedPlayers:
+                if edited_player not in self.tournament.players:
+                    print ('player {0} does not exist in '
+                           'database!').format(edited_player.player_index)
+                    self._editedPlayers = set()
+                    return
+
+            if not selectedPlayers:
+                self.clear_edited_players()
+                return
+            elif self._editedPlayers:
+                print self._editedPlayers
+                print 'CANCEL2!'
+            elif self._adding_player:
+                self._adding_player = False
+                self.update()
+
+            self._editedPlayers = selectedPlayers
+            print "Populate right hand side with player{s} {0}!".format(
+                list(selectedPlayers),
+                s=('s' if len(selectedPlayers) > 1 else ''))
+
+            for selectedPlayer in selectedPlayers:
+                self.ui.given_name.setText(selectedPlayer['Given name'])
+                self.ui.family_name.setText(selectedPlayer['Family name'])
+                break
+
+    def clear_edited_players(self):
+        print 'CANCEL1!'
+        self._editedPlayers = set()
+        if self._adding_player:
+            self._adding_player = False
+            self.update()
+        self.ui.given_name.setText('')
+        self.ui.family_name.setText('')
+
+        tableWidget = self.ui.tableWidget
+        selected_ranges = tableWidget.selectedRanges()
+        tableWidget.blockSignals(True)
+        for selected_range in selected_ranges:
+            tableWidget.setRangeSelected(selected_range, False)
+        tableWidget.blockSignals(False)
+
+    def save_edited_players(self):
+        if self._adding_player:
+            params = {}
+            params['Given name'] = unicode(self.ui.given_name.text())
+            params['Family name'] = unicode(self.ui.family_name.text())
+            player = self.tournament.add_player(params)
+            self._editedPlayers.add(player)
+
+        for edited_player in self._editedPlayers:
+            edited_player['Given name'] = unicode(self.ui.given_name.text())
+            edited_player['Family name'] = unicode(self.ui.family_name.text())
+
+        #NB: The set is invalid because hashes have changed. Clearing will take
+        #    care of it. So no worries.
+        self.clear_edited_players()
+
+    def add_player_clicked(self):
+        self.clear_edited_players()
+        self._adding_player = True
+        self.update()

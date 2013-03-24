@@ -18,7 +18,7 @@ class Player(GitEntry):
     # TODO: Perhaps should be called req_field_names instead since
     # type is not included here but now instead constructed in 
     # get_player_fields.
-    required_fields = [u'Given name', u'Family name', u'Rank']
+    required_fields = [u'Given name', u'Family name']
 
     def __init__(self, repo, params=None, index=None, *args, **kwargs):
         self.repo = repo
@@ -40,7 +40,7 @@ class Player(GitEntry):
             filename=self.player_index, *args, **kwargs)
 
     def __unicode__(self):
-        rank = self['Rank']
+        rank = self.get('Rank', default='No rank')
         given_name = self['Given name']
         family_name = self['Family name']
         return u'{0} {1} ({2})'.format(given_name, family_name, rank)
@@ -51,6 +51,7 @@ class Player(GitEntry):
     def _rename_file(self, given_name, family_name):
         new_index = u'{0}_{1}'.format(
                 given_name, family_name).encode('ascii', errors='egd')
+        self.player_index = new_index
         GitEntry._rename_file(self, PlayerList.path, new_index)
 
     def __setitem__(self, field, value):
@@ -70,6 +71,10 @@ class Player(GitEntry):
         """Compare players by index."""
         return self.player_index == other.player_index
 
+    def __hash__(self):
+        """Build hash from index."""
+        return hash(self.player_index)
+
 
 class PlayerList(object):
     """Class managing a git repository with a list of players."""
@@ -86,7 +91,7 @@ class PlayerList(object):
     def __getitem__(self, index):
         return Player(self.repo, index=index)
 
-    def append(self, params):
+    def _append(self, params):
         p = Player(self.repo, params=params)
         return p.player_index
 
@@ -96,3 +101,9 @@ class PlayerList(object):
     def __iter__(self):
         for filename in os.listdir(self.fq_playerdir_path):
             yield Player(self.repo, index=filename)
+
+    def __contains__(self, player):
+        for p in self:
+            if p == player:
+                return True
+        return False
