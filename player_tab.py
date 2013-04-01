@@ -133,7 +133,6 @@ class PlayerTab(QWidget):
                 return
             elif self._editedPlayers:
                 print self._editedPlayers
-                print 'CANCEL2!'
             elif self._adding_player:
                 self._adding_player = False
                 self.update()
@@ -149,7 +148,6 @@ class PlayerTab(QWidget):
                 break
 
     def clear_edited_players(self):
-        print 'CANCEL1!'
         self._editedPlayers = set()
         if self._adding_player:
             self._adding_player = False

@@ -137,7 +137,7 @@ class Tournament(object):
                     pairings.append(pairing)
         if pairings:
             raise RemovePlayerError("Remove pairings before removing player.",
-                                    pairing)
+                                    pairings)
 
         player.remove()
 
