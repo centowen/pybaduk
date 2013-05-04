@@ -129,15 +129,15 @@ class Tournament(object):
         """Tries to remove a player.
         
         Raises RemovePlayerError if the player exists in any pairings."""
-        pairings = []
-        for round_ in self._pairings:
-            for pairing in round_:
-                if (pairing['player1'] == player.player_index or
-                        pairing['player2'] == player.player_index):
-                    pairings.append(pairing)
-        if pairings:
-            raise RemovePlayerError("Remove pairings before removing player.",
-                                    pairings)
+        # pairings = []
+        # for round_ in self._pairings:
+        #     for pairing in round_:
+        #         if (pairing['player1'] == player.player_index or
+        #                 pairing['player2'] == player.player_index):
+        #             pairings.append(pairing)
+        # if pairings:
+        #     raise RemovePlayerError("Remove pairings before removing player.",
+        #                             pairings)
 
         player.remove()
 

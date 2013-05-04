@@ -38,6 +38,9 @@ class RankSpinBox(QSpinBox):
             return '{0}k'.format(1 - value)
 
     def valueFromText(self, text):
+        if not text:
+            return RankSpinBox._minvalue
+
         res = self.acceptable_rank.match(text)
         if res:
             number, level = res.groups()
@@ -156,6 +159,7 @@ class PlayerTab(QWidget):
 
         self.ui.tableWidget.itemSelectionChanged.connect(self.players_selected)
         self.ui.add_player.clicked.connect(self.add_player_clicked)
+        self.ui.delete_player.clicked.connect(self.delete_player_clicked)
         self.ui.ok_cancel.rejected.connect(self.clear_edited_players)
         self.ui.ok_cancel.accepted.connect(self.save_edited_players)
 
@@ -304,6 +308,12 @@ class PlayerTab(QWidget):
         #NB: The set is invalid because hashes have changed. Clearing will take
         #    care of it. So no worries.
         self.clear_edited_players()
+    
+    def delete_player_clicked(self):
+        for edited_player in self._editedPlayers:
+            self.tournament.remove_player(edited_player)
+        self.clear_edited_players()
+        self.update()
 
     def add_player_clicked(self):
         self.clear_edited_players()

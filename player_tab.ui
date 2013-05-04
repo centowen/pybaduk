@@ -64,6 +64,13 @@ Preliminary: 0</string>
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QPushButton" name="delete_player">
+            <property name="text">
+             <string>Delete</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>
@@ -284,7 +291,6 @@ Preliminary: 0</string>
   <tabstop>ok_cancel</tabstop>
   <tabstop>lineEdit_6</tabstop>
   <tabstop>listWidget</tabstop>
-  <tabstop>add_player</tabstop>
  </tabstops>
  <resources/>
  <connections/>
