@@ -1,29 +1,134 @@
 from functools import total_ordering
 import locale
+import logging
+import re
 
-from PyQt4.QtGui import QWidget, QTableWidgetItem, QTableWidgetSelectionRange
+from PyQt4.QtGui import (QWidget, QTableWidgetItem, QTableWidgetSelectionRange,
+                         QSpinBox, QValidator)
 from player_tab_ui import Ui_PlayerTab
 from players import Player
 
 
+class RankSpinBox(QSpinBox):
+
+    _minvalue = -50
+
+    def __init__(self, *args, **kwargs):
+        super(RankSpinBox, self).__init__(*args, **kwargs)
+        self.setMinimum(RankSpinBox._minvalue)
+        self.acceptable_rank = re.compile('([0-9]+)\s*([k|d|p]).*', flags=re.IGNORECASE)
+        self.intermediate_rank = re.compile('([0-9]+)\s*', flags=re.IGNORECASE)
+
+    def validate(self, text, pos):
+        if self.acceptable_rank.match(text) or text == '' or text == 'No rank':
+            return (QValidator.Acceptable, pos)
+        elif self.intermediate_rank.match(text):
+            return (QValidator.Intermediate, pos)
+        else:
+            return (QValidator.Invalid, pos)
+
+    def textFromValue(self, value):
+        if value == RankSpinBox._minvalue:
+            return 'No rank'
+        elif 10 <= value:
+            return '{0}p'.format(value - 9)
+        elif 1 <= value < 10:
+            return '{0}d'.format(value)
+        else:
+            return '{0}k'.format(1 - value)
+
+    def valueFromText(self, text):
+        res = self.acceptable_rank.match(text)
+        if res:
+            number, level = res.groups()
+            number = int(number)
+            level = unicode(level).lower()
+            if level == 'k':
+                return 1 - number
+            elif level == 'd':
+                return number
+            else:
+                return number + 9
+        else:
+            return RankSpinBox._minvalue
+
+
+class BoolTableItem(QTableWidgetItem):
+    def __init__(self, value, *args, **kwargs):
+        if value:
+            self.name = 'Yes'
+        else:
+            self.name = 'No'
+        super(BoolTableItem, self).__init__(self.name, *args, **kwargs)
+
+
 @total_ordering
-class OrderedName(QTableWidgetItem):
-    def __init__(self, name):
-        super(OrderedName, self).__init__(name)
-        self.name = name
-        locale.setlocale(locale.LC_ALL, "sv_SE.UTF-8")
+class RankTableItem(QTableWidgetItem):
+    LEVELDICT = {'p': 1, 'd': 2, 'k': 3}
+
+    def __init__(self, value, *args, **kwargs):
+        self.value = value
+        if not self.value:
+            self.value = 'No rank'
+            self.level = None
+            self.number = None
+        else:
+            try:
+                self.level = RankTableItem.LEVELDICT[self.value[-1]]
+                self.number = int(self.value[:-1])
+            except (KeyError, ValueError):
+                logging.error('Invalid rank: {0}'.format(value))
+                self.value = 'No rank'
+                self.level = None
+                self.number = None
+
+        super(RankTableItem, self).__init__(self.value, *args, **kwargs)
 
     def __unicode__(self):
-        return self.name
+        return self.value
 
     def __str__(self):
-        return self.name.encode('ascii', errors='egd')
+        return self.value
 
-    def __eq__(self, other_name):
-        return locale.strcoll(self.name, other_name.name) == 0
+    def __eq__(self, other):
+        return self.level == other.level and self.number == other.number
 
-    def __lt__(self, other_name):
-        return locale.strcoll(self.name, other_name.name) < 0
+    def __lt__(self, other):
+        if self.level and not other.level:
+            return True
+        elif not self.level:
+            return False
+        elif self.level != other.level:
+            return self.level < other.level
+        elif self.level == RankTableItem.LEVELDICT['k']:
+            return self.number < other.number
+        else:
+            return self.number > other.number
+
+
+@total_ordering
+class StringTableItem(QTableWidgetItem):
+    def __init__(self, value, *args, **kwargs):
+        locale_name = "sv_SE.UTF-8"
+        try:
+            locale.setlocale(locale.LC_ALL, locale_name)
+        except locale.Error:
+            logging.warning('Could not set locale {0}. Using system '
+                            'default.'.format(locale_name))
+        super(StringTableItem, self).__init__(value, *args, **kwargs)
+        self.value = value
+
+    def __unicode__(self):
+        return self.value
+
+    def __str__(self):
+        return self.value.encode('ascii', errors='egd')
+
+    def __eq__(self, other):
+        return locale.strcoll(self.value, other.value) == 0
+
+    def __lt__(self, other):
+        return locale.strcoll(self.value, other.value) < 0
 
 
 class PlayerTab(QWidget):
@@ -36,6 +141,9 @@ class PlayerTab(QWidget):
 
         self.ui = Ui_PlayerTab()
         self.ui.setupUi(self)
+
+        rank_spinbox = RankSpinBox()
+        self.ui.rank_layout.addWidget(rank_spinbox)
 
         self.update()
 
@@ -91,9 +199,16 @@ class PlayerTab(QWidget):
                     cell_value = player[col_name]
 
                 if isinstance(cell_value, bool):
-                    cell_value = unicode(cell_value)
+                    QTableWidgetItemClass = BoolTableItem
+                elif col_name == 'Rank':
+                    QTableWidgetItemClass = RankTableItem
+                elif isinstance(cell_value, unicode):
+                    QTableWidgetItemClass = StringTableItem
+                else:
+                    QTableWidgetItemClass = QTableWidgetItem
 
-                tableWidget.setItem(i, col_index, QTableWidgetItem(cell_value))
+                tableWidget.setItem(
+                        i, col_index, QTableWidgetItemClass(cell_value))
 
             if player in selectedPlayers and not self._adding_player:
                 selRange = QTableWidgetSelectionRange(

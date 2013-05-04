@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+import locale
 import codecs
 import sys
+import logging
 
 from PyQt4.QtCore import QTimer, QSettings
 from PyQt4.QtGui import QMainWindow, QWidget, QApplication
@@ -12,6 +14,10 @@ from tournament import Tournament, Field
 
 
 codecs.register_error('egd', egdcodec.egd_replace)
+try:
+    logging.basicConfig(filename='debug.log', level=logging.DEBUG)
+except:
+    pass
 
 
 class MainWindow(QMainWindow):

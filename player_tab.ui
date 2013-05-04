@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>741</width>
+    <width>827</width>
     <height>570</height>
    </rect>
   </property>
@@ -117,9 +117,6 @@ Preliminary: 0</string>
             <property name="text">
              <string>Rank</string>
             </property>
-            <property name="buddy">
-             <cstring>rank</cstring>
-            </property>
            </widget>
           </item>
           <item row="1" column="0">
@@ -155,40 +152,8 @@ Preliminary: 0</string>
            </widget>
           </item>
           <item row="2" column="2">
-           <widget class="QWidget" name="widget_4" native="true">
-            <layout class="QHBoxLayout" name="horizontalLayout_3">
-             <item>
-              <widget class="QComboBox" name="rank">
-               <property name="editable">
-                <bool>true</bool>
-               </property>
-               <item>
-                <property name="text">
-                 <string>1D</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>1k</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>2k</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>3k</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>4k</string>
-                </property>
-               </item>
-              </widget>
-             </item>
+           <widget class="QWidget" name="rank_container" native="true">
+            <layout class="QHBoxLayout" name="rank_layout">
              <item>
               <spacer name="horizontalSpacer_2">
                <property name="orientation">
@@ -312,7 +277,6 @@ Preliminary: 0</string>
   <tabstop>tableWidget</tabstop>
   <tabstop>given_name</tabstop>
   <tabstop>family_name</tabstop>
-  <tabstop>rank</tabstop>
   <tabstop>lineEdit_3</tabstop>
   <tabstop>lineEdit_5</tabstop>
   <tabstop>lineEdit_4</tabstop>
