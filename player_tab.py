@@ -52,6 +52,9 @@ class RankSpinBox(QSpinBox):
         else:
             return RankSpinBox._minvalue
 
+    def clear(self):
+        self.setValue(RankSpinBox._minvalue)
+
 
 class BoolTableItem(QTableWidgetItem):
     def __init__(self, value, *args, **kwargs):
@@ -142,8 +145,8 @@ class PlayerTab(QWidget):
         self.ui = Ui_PlayerTab()
         self.ui.setupUi(self)
 
-        rank_spinbox = RankSpinBox()
-        self.ui.rank_layout.addWidget(rank_spinbox)
+        self.ui.rank_spinbox = RankSpinBox()
+        self.ui.rank_layout.addWidget(self.ui.rank_spinbox)
 
         self.update()
 
@@ -260,6 +263,9 @@ class PlayerTab(QWidget):
             for selectedPlayer in selectedPlayers:
                 self.ui.given_name.setText(selectedPlayer['Given name'])
                 self.ui.family_name.setText(selectedPlayer['Family name'])
+                rank_spinbox = self.ui.rank_spinbox
+                rank_spinbox.setValue(
+                        rank_spinbox.valueFromText(selectedPlayer['Rank']))
                 break
 
     def clear_edited_players(self):
@@ -269,6 +275,7 @@ class PlayerTab(QWidget):
             self.update()
         self.ui.given_name.setText('')
         self.ui.family_name.setText('')
+        self.ui.rank_spinbox.clear()
 
         tableWidget = self.ui.tableWidget
         selected_ranges = tableWidget.selectedRanges()
@@ -278,16 +285,21 @@ class PlayerTab(QWidget):
         tableWidget.blockSignals(False)
 
     def save_edited_players(self):
+        rank_spinbox = self.ui.rank_spinbox
         if self._adding_player:
             params = {}
             params['Given name'] = unicode(self.ui.given_name.text())
             params['Family name'] = unicode(self.ui.family_name.text())
+            params['Rank'] = unicode(
+                    rank_spinbox.textFromValue(rank_spinbox.value()))
             player = self.tournament.add_player(params)
             self._editedPlayers.add(player)
 
         for edited_player in self._editedPlayers:
             edited_player['Given name'] = unicode(self.ui.given_name.text())
             edited_player['Family name'] = unicode(self.ui.family_name.text())
+            edited_player['Rank'] = unicode(
+                    rank_spinbox.textFromValue(rank_spinbox.value()))
 
         #NB: The set is invalid because hashes have changed. Clearing will take
         #    care of it. So no worries.
