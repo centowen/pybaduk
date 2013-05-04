@@ -4,9 +4,23 @@ import logging
 import re
 
 from PyQt4.QtGui import (QWidget, QTableWidgetItem, QTableWidgetSelectionRange,
-                         QSpinBox, QValidator)
+                         QSpinBox, QValidator, QLabel, QLineEdit)
 from player_tab_ui import Ui_PlayerTab
 from players import Player
+
+
+class PlayerFieldLineEdit(QLineEdit):
+
+    def getDBValue(self):
+        return unicode(self.text())
+
+    def setDBValue(self, dbValue):
+        if dbValue is None:
+            dbValue = ''
+        self.setText(dbValue)
+
+    def clear(self):
+        self.setText('')
 
 
 class RankSpinBox(QSpinBox):
@@ -54,6 +68,15 @@ class RankSpinBox(QSpinBox):
                 return number + 9
         else:
             return RankSpinBox._minvalue
+
+    def setDBValue(self, dbValue):
+        self.setValue(self.valueFromText(dbValue))
+
+    def getDBValue(self):
+        if self.value() == RankSpinBox._minvalue:
+            return None
+
+        return self.textFromValue(self.value())
 
     def clear(self):
         self.setValue(RankSpinBox._minvalue)
@@ -148,8 +171,16 @@ class PlayerTab(QWidget):
         self.ui = Ui_PlayerTab()
         self.ui.setupUi(self)
 
-        self.ui.rank_spinbox = RankSpinBox()
-        self.ui.rank_layout.addWidget(self.ui.rank_spinbox)
+        self.ui.player_fields = {}
+
+        for (i, field) in enumerate(self.tournament.config['player_fields']):
+            if field.datatype == 'text':
+                fieldWidget = PlayerFieldLineEdit()
+            elif field.datatype == 'rank':
+                fieldWidget = RankSpinBox()
+            self.ui.player_fields[field.name] = fieldWidget
+            self.ui.player_edit_layout.insertRow(i, QLabel(field.name), 
+                                                 fieldWidget)
 
         self.update()
 
@@ -205,14 +236,23 @@ class PlayerTab(QWidget):
                 else:
                     cell_value = player[col_name]
 
-                if isinstance(cell_value, bool):
-                    QTableWidgetItemClass = BoolTableItem
-                elif col_name == 'Rank':
-                    QTableWidgetItemClass = RankTableItem
-                elif isinstance(cell_value, unicode):
+                if cell_value is None:
+                    cell_value = u''
+
+                datatype = None
+                for field in self.tournament.config['player_fields']:
+                    if field.name == col_name:
+                        datatype = field.datatype
+
+                if datatype == 'text':
                     QTableWidgetItemClass = StringTableItem
+                elif datatype == 'bool':
+                    QTableWidgetItemClass = BoolTableItem
+                elif datatype == 'rank':
+                    QTableWidgetItemClass = RankTableItem
                 else:
                     QTableWidgetItemClass = QTableWidgetItem
+                    logging.warning('Using default QTableWidgetItemClass!')
 
                 tableWidget.setItem(
                         i, col_index, QTableWidgetItemClass(cell_value))
@@ -245,7 +285,7 @@ class PlayerTab(QWidget):
         else:
             for edited_player in self._editedPlayers:
                 if edited_player not in self.tournament.players:
-                    print ('player {0} does not exist in '
+                    logging.error('player {0} does not exist in '
                            'database!').format(edited_player.player_index)
                     self._editedPlayers = set()
                     return
@@ -254,22 +294,17 @@ class PlayerTab(QWidget):
                 self.clear_edited_players()
                 return
             elif self._editedPlayers:
-                print self._editedPlayers
+                pass
             elif self._adding_player:
                 self._adding_player = False
                 self.update()
 
             self._editedPlayers = selectedPlayers
-            print "Populate right hand side with player{s} {0}!".format(
-                list(selectedPlayers),
-                s=('s' if len(selectedPlayers) > 1 else ''))
 
             for selectedPlayer in selectedPlayers:
-                self.ui.given_name.setText(selectedPlayer['Given name'])
-                self.ui.family_name.setText(selectedPlayer['Family name'])
-                rank_spinbox = self.ui.rank_spinbox
-                rank_spinbox.setValue(
-                        rank_spinbox.valueFromText(selectedPlayer['Rank']))
+                for field in self.tournament.config['player_fields']:
+                    self.ui.player_fields[field.name].setDBValue(
+                        selectedPlayer[field.name])
                 break
 
     def clear_edited_players(self):
@@ -277,9 +312,8 @@ class PlayerTab(QWidget):
         if self._adding_player:
             self._adding_player = False
             self.update()
-        self.ui.given_name.setText('')
-        self.ui.family_name.setText('')
-        self.ui.rank_spinbox.clear()
+        for field in self.tournament.config['player_fields']:
+            self.ui.player_fields[field.name].clear()
 
         tableWidget = self.ui.tableWidget
         selected_ranges = tableWidget.selectedRanges()
@@ -289,21 +323,16 @@ class PlayerTab(QWidget):
         tableWidget.blockSignals(False)
 
     def save_edited_players(self):
-        rank_spinbox = self.ui.rank_spinbox
         if self._adding_player:
             params = {}
-            params['Given name'] = unicode(self.ui.given_name.text())
-            params['Family name'] = unicode(self.ui.family_name.text())
-            params['Rank'] = unicode(
-                    rank_spinbox.textFromValue(rank_spinbox.value()))
+            for field in self.tournament.config['player_fields']:
+                params[field.name] = self.ui.player_fields[field.name].getDBValue()
             player = self.tournament.add_player(params)
             self._editedPlayers.add(player)
 
         for edited_player in self._editedPlayers:
-            edited_player['Given name'] = unicode(self.ui.given_name.text())
-            edited_player['Family name'] = unicode(self.ui.family_name.text())
-            edited_player['Rank'] = unicode(
-                    rank_spinbox.textFromValue(rank_spinbox.value()))
+            for field in self.tournament.config['player_fields']:
+                edited_player[field.name] = self.ui.player_fields[field.name].getDBValue()
 
         #NB: The set is invalid because hashes have changed. Clearing will take
         #    care of it. So no worries.

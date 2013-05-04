@@ -15,10 +15,7 @@ class Field(object):
         self.name = name
         self.datatype = datatype
         self.visible = visible
-        if default == None:
-            self.default = datatype()
-        else:
-            self.default = default
+        self.default = default
 
     def __eq__(self, other):
         return self.name == other.name
@@ -42,9 +39,9 @@ class TournamentConfig(GitEntry):
         if not os.path.isfile(os.path.join(repo.path, filename)):
             params = {
                     'name': name,
-                    'player_fields': [Field(u'Given name', unicode),
-                                      Field(u'Family name', unicode),
-                                      Field(u'Rank', unicode, default=u'30K')]}
+                    'player_fields': [Field(u'Given name', 'text'),
+                                      Field(u'Family name', 'text'),
+                                      Field(u'Rank', 'rank')]}
         else:
             params = None
 

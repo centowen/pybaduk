@@ -31,8 +31,8 @@ if __name__ == "__main__":
             shutil.rmtree(os.path.join(turnpath, turnname.encode('ascii', 'egd')))
 
     tournament = Tournament(turnpath, turnname)
-    tournament.add_player_field(Field(u'Club', datatype=unicode, default=u'Göteborg'))
-    tournament.add_player_field(Field(u'Country', unicode))
+    tournament.add_player_field(Field(u'Club', datatype='text', default=u'Göteborg'))
+    tournament.add_player_field(Field(u'Country', 'text'))
 
     players = tournament.players
     if not players:
@@ -46,5 +46,5 @@ if __name__ == "__main__":
         tournament.add_player({'Given name': u'Erika', 'Family name': u'Eriksson', 'Rank': '4p'})
         tournament.add_player({'Given name': u'Kajsa', 'Family name': u'Eriksson', 'Rank': '4p'})
 
-    tournament.add_player_field(Field(u'Has päjd', bool))
-    magnus[u'Has päjd'] = True
+#     tournament.add_player_field(Field(u'Has päjd', bool))
+#     magnus[u'Has päjd'] = True
