@@ -26,10 +26,12 @@ class PlayerFieldLineEdit(QLineEdit):
 class RankSpinBox(QSpinBox):
 
     _minvalue = -50
+    _maxvalue = 18
 
     def __init__(self, *args, **kwargs):
         super(RankSpinBox, self).__init__(*args, **kwargs)
         self.setMinimum(RankSpinBox._minvalue)
+        self.setMaximum(RankSpinBox._maxvalue)
         self.acceptable_rank = re.compile('([0-9]+)\s*([k|d|p]).*', flags=re.IGNORECASE)
         self.intermediate_rank = re.compile('([0-9]+)\s*', flags=re.IGNORECASE)
 
