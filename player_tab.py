@@ -176,10 +176,10 @@ class PlayerTab(QWidget):
         self.ui.player_fields = {}
 
         for (i, field) in enumerate(self.tournament.config['player_fields']):
-            if field.datatype == 'text':
-                fieldWidget = PlayerFieldLineEdit()
-            elif field.datatype == 'rank':
+            if field.datatype == 'rank':
                 fieldWidget = RankSpinBox()
+            else:  # Default treatment as text string.
+                fieldWidget = PlayerFieldLineEdit()
             self.ui.player_fields[field.name] = fieldWidget
             self.ui.player_edit_layout.insertRow(i, QLabel(field.name), 
                                                  fieldWidget)

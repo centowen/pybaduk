@@ -33,18 +33,26 @@ if __name__ == "__main__":
     tournament = Tournament(turnpath, turnname)
     tournament.add_player_field(Field(u'Club', datatype='text', default=u'Göteborg'))
     tournament.add_player_field(Field(u'Country', 'text'))
+    tournament.add_player_field(Field(u'Fiskar', 'text', default=u'Gös'))
+
 
     players = tournament.players
     if not players:
         tournament.add_player({'Given name': u'Robert', 'Family name': u'Åhs', 'Rank': '1k'})
         eskil = tournament.add_player({'Given name': u'Eskil', 'Family name': u'Varenius', 'Rank': '4k'})
         lukas = tournament.add_player({'Given name': u'Lukas', 'Family name': u'Lindroos', 'Rank': '6k'})
-        tournament.add_player({'Given name': u'Erik', 'Family name': u'Änterhake', 'Rank': '30k'})
+        erik = tournament.add_player({'Given name': u'Erik', 'Family name': u'Änterhake', 'Rank': '30k'})
         magnus = tournament.add_player({'Given name': u'Magnus', 'Family name': u'Sandén', 'Rank': '4d'})
         tournament.add_player({'Given name': u'Niklas', 'Family name': u'Örjansson', 'Rank': '2d'})
         tournament.add_player({'Given name': u'Niklas', 'Family name': u'Eriksson', 'Rank': None})
         tournament.add_player({'Given name': u'Erika', 'Family name': u'Eriksson', 'Rank': '4p'})
         tournament.add_player({'Given name': u'Kajsa', 'Family name': u'Eriksson', 'Rank': '4p'})
+    if not tournament.pairings:
+        tournament.config.tournament_type.draw_pairings(tournament, '1')
+#         tournament.add_pairing({'player1': eskil, 'player2': lukas, 'group': 'peti'})
+#         tournament.add_pairing({'player1': magnus, 'player2': erik, 'group': 'peti'})
+#         tournament.add_pairing(eskil, lukas)
+#         tournament.add_pairing(eskil, lukas)
 
 #     tournament.add_player_field(Field(u'Has päjd', bool))
 #     magnus[u'Has päjd'] = True

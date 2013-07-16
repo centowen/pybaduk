@@ -41,13 +41,21 @@ class TournamentConfig(GitEntry):
                     'name': name,
                     'player_fields': [Field(u'Given name', 'text'),
                                       Field(u'Family name', 'text'),
-                                      Field(u'Rank', 'rank')]}
+                                      Field(u'Rank', 'rank')],
+                    'tournament_type': 'dummy_lottning'}
         else:
             params = None
 
         super(TournamentConfig, self).__init__(
             repo, params=params, git_table='.',
             filename=filename, *args, **kwargs)
+
+        self['tournament_type'] = os.path.basename(self['tournament_type'])
+        print 'plugins.' + self['tournament_type']
+
+        import importlib
+        mod = importlib.import_module('.'+self['tournament_type'], 'plugins')
+        self.tournament_type = mod.TournamentType()
 
 
 class Tournament(object):
@@ -74,7 +82,10 @@ class Tournament(object):
         #if not os.path.isdir(os.path.join(self.repopath, 'pairings')):
         #    os.mkdir(os.path.join(self.repopath, 'pairings'))
         #TODO: Obso1337 code
-        #self._pairings = []
+
+        path = 'pairings'
+        self._pairings = pairings.PairingList(repo, path)
+
         #for game_round in range(game_rounds):
         #    path = os.path.join('pairings', 'round{}'.format(game_round))
         #    self._pairings.append(pairings.PairingList(repo, path))
@@ -119,8 +130,8 @@ class Tournament(object):
         index = self._players._append(params)
         return self._players[index]
 
-    def add_pairing(self, game_round, player1, player2=None):
-        self._pairings[game_round].append(player1, player2)
+    def add_pairing(self, params):
+        self._pairings.append(params)
 
     def remove_player(self, player):
         """Tries to remove a player.
