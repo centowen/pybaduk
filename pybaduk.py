@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import locale
 import codecs
 import sys
 import logging
@@ -11,7 +10,7 @@ import egdcodec
 
 from qttest_ui import Ui_MainWindow
 from player_tab import PlayerTab
-from tournament import Tournament, Field
+from tournament import Tournament
 
 
 codecs.register_error('egd', egdcodec.egd_replace)
