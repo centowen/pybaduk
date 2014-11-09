@@ -174,14 +174,14 @@ class PlayerTab(QWidget):
         self.ui = Ui_PlayerTab()
         self.ui.setupUi(self)
 
-        self.ui.player_fields = {}
+        self._player_fields = {}
 
         for (i, field) in enumerate(self.tournament.config['player_fields']):
             if field.datatype == 'rank':
                 field_widget = RankSpinBox()
             else:  # Default treatment as text string.
                 field_widget = PlayerFieldLineEdit()
-            self.ui.player_fields[field.name] = field_widget
+            self._player_fields[field.name] = field_widget
             self.ui.player_edit_layout.insertRow(i, QLabel(field.name), 
                                                  field_widget)
 
@@ -306,7 +306,7 @@ class PlayerTab(QWidget):
 
             for selectedPlayer in selected_players:
                 for field in self.tournament.config['player_fields']:
-                    self.ui.player_fields[field.name].set_db_value(
+                    self._player_fields[field.name].set_db_value(
                         selectedPlayer[field.name])
                 break
 
@@ -316,7 +316,7 @@ class PlayerTab(QWidget):
             self._adding_player = False
             self.update()
         for field in self.tournament.config['player_fields']:
-            self.ui.player_fields[field.name].clear()
+            self._player_fields[field.name].clear()
 
         table_widget = self.ui.table_widget
         selected_ranges = table_widget.selectedRanges()
@@ -329,13 +329,13 @@ class PlayerTab(QWidget):
         if self._adding_player:
             params = {}
             for field in self.tournament.config['player_fields']:
-                params[field.name] = self.ui.player_fields[field.name].get_db_value()
+                params[field.name] = self._player_fields[field.name].get_db_value()
             player = self.tournament.add_player(params)
             self._edited_players.add(player)
 
         for edited_player in self._edited_players:
             for field in self.tournament.config['player_fields']:
-                edited_player[field.name] = self.ui.player_fields[field.name].get_db_value()
+                edited_player[field.name] = self._player_fields[field.name].get_db_value()
 
         #NB: The set is invalid because hashes have changed. Clearing will take
         #    care of it. So no worries.
