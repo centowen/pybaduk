@@ -4,20 +4,21 @@ import logging
 import re
 
 from PyQt4.QtGui import (QWidget, QTableWidgetItem, QTableWidgetSelectionRange,
-                         QSpinBox, QValidator, QLabel, QLineEdit)
+                         QSpinBox, QValidator, QLabel, QLineEdit,
+                         QStandardItemModel)
+
 from player_tab_ui import Ui_PlayerTab
-from players import Player
 
 
 class PlayerFieldLineEdit(QLineEdit):
 
-    def getDBValue(self):
+    def get_db_value(self):
         return unicode(self.text())
 
-    def setDBValue(self, dbValue):
-        if dbValue is None:
-            dbValue = ''
-        self.setText(dbValue)
+    def set_db_value(self, db_value):
+        if db_value is None:
+            db_value = ''
+        self.setText(db_value)
 
     def clear(self):
         self.setText('')
@@ -32,16 +33,16 @@ class RankSpinBox(QSpinBox):
         super(RankSpinBox, self).__init__(*args, **kwargs)
         self.setMinimum(RankSpinBox._minvalue)
         self.setMaximum(RankSpinBox._maxvalue)
-        self.acceptable_rank = re.compile('([0-9]+)\s*([k|d|p]).*', flags=re.IGNORECASE)
-        self.intermediate_rank = re.compile('([0-9]+)\s*', flags=re.IGNORECASE)
+        self.acceptable_rank = re.compile(r'([0-9]+)\s*([k|d|p]).*', flags=re.IGNORECASE)
+        self.intermediate_rank = re.compile(r'([0-9]+)\s*', flags=re.IGNORECASE)
 
     def validate(self, text, pos):
         if self.acceptable_rank.match(text) or text == '' or text == 'No rank':
-            return (QValidator.Acceptable, pos)
+            return QValidator.Acceptable, pos
         elif self.intermediate_rank.match(text):
-            return (QValidator.Intermediate, pos)
+            return QValidator.Intermediate, pos
         else:
-            return (QValidator.Invalid, pos)
+            return QValidator.Invalid, pos
 
     def textFromValue(self, value):
         if value == RankSpinBox._minvalue:
@@ -71,10 +72,10 @@ class RankSpinBox(QSpinBox):
         else:
             return RankSpinBox._minvalue
 
-    def setDBValue(self, dbValue):
-        self.setValue(self.valueFromText(dbValue))
+    def set_db_value(self, db_value):
+        self.setValue(self.valueFromText(db_value))
 
-    def getDBValue(self):
+    def get_db_value(self):
         if self.value() == RankSpinBox._minvalue:
             return None
 
@@ -167,7 +168,7 @@ class PlayerTab(QWidget):
     def __init__(self, tournament, parent=None):
         QWidget.__init__(self, parent)
         self.tournament = tournament
-        self._editedPlayers = set()
+        self._edited_players = set()
         self._adding_player = False
 
         self.ui = Ui_PlayerTab()
@@ -177,49 +178,49 @@ class PlayerTab(QWidget):
 
         for (i, field) in enumerate(self.tournament.config['player_fields']):
             if field.datatype == 'rank':
-                fieldWidget = RankSpinBox()
+                field_widget = RankSpinBox()
             else:  # Default treatment as text string.
-                fieldWidget = PlayerFieldLineEdit()
-            self.ui.player_fields[field.name] = fieldWidget
+                field_widget = PlayerFieldLineEdit()
+            self.ui.player_fields[field.name] = field_widget
             self.ui.player_edit_layout.insertRow(i, QLabel(field.name), 
-                                                 fieldWidget)
+                                                 field_widget)
 
         self.update()
 
-        self.ui.tableWidget.verticalHeader().hide()
-        self.ui.tableWidget.resizeColumnsToContents()
-        self.ui.tableWidget.horizontalHeader().setStretchLastSection(True)
+        self.ui.table_widget.verticalHeader().hide()
+        self.ui.table_widget.resizeColumnsToContents()
+        self.ui.table_widget.horizontalHeader().setStretchLastSection(True)
 
-        self.ui.tableWidget.itemSelectionChanged.connect(self.players_selected)
+        self.ui.table_widget.itemSelectionChanged.connect(self.players_selected)
         self.ui.add_player.clicked.connect(self.add_player_clicked)
         self.ui.delete_player.clicked.connect(self.delete_player_clicked)
         self.ui.ok_cancel.rejected.connect(self.clear_edited_players)
         self.ui.ok_cancel.accepted.connect(self.save_edited_players)
 
-    def playerAtRow(self, row):
+    def player_at_row(self, row):
         """Retrieve player object from row number."""
         player_index = str(self.ui.tableWidget.item(row, 0).text())
         return self.tournament.players[player_index]
 
     def update(self):
         """Update GUI from underlying data model."""
-        tableWidget = self.ui.tableWidget
-        tableWidget.setSortingEnabled(False)
+        table_widget = self.ui.tableWidget
+        table_widget.setSortingEnabled(False)
 
-        selectedItems = tableWidget.selectedItems()
-        selectedRows = set([item.row() for item in selectedItems])
-        selectedPlayers = [self.playerAtRow(row) for row in selectedRows]
+        selected_items = table_widget.selectedItems()
+        selected_rows = set([item.row() for item in selected_items])
+        selected_players = [self.player_at_row(row) for row in selected_rows]
 
-        currentRow = tableWidget.currentRow()
-        currentColumn = tableWidget.currentColumn()
+        # currentRow = table_widget.currentRow()
+        # currentColumn = table_widget.currentColumn()
 
-        tableWidget.blockSignals(True)
-        tableWidget.clear()
-        tableWidget.blockSignals(False)
+        table_widget.blockSignals(True)
+        table_widget.clear()
+        table_widget.blockSignals(False)
         row_count = len(self.tournament.players)
         if self._adding_player:
             row_count += 1
-        tableWidget.setRowCount(row_count)
+        table_widget.setRowCount(row_count)
 
         table_header = ['player_index']
         for field in self.tournament.config['player_fields']:
@@ -227,9 +228,9 @@ class PlayerTab(QWidget):
                 table_header.append(field.name)
 
         # Add player index as column zero but don't show it.
-        tableWidget.setColumnCount(len(table_header))
-        tableWidget.setHorizontalHeaderLabels(table_header)
-        tableWidget.setColumnHidden(0, True)
+        table_widget.setColumnCount(len(table_header))
+        table_widget.setHorizontalHeaderLabels(table_header)
+        table_widget.setColumnHidden(0, True)
 
         for i, player in enumerate(self.tournament.players):
             for col_index, col_name in enumerate(table_header):
@@ -247,101 +248,101 @@ class PlayerTab(QWidget):
                         datatype = field.datatype
 
                 if datatype == 'text':
-                    QTableWidgetItemClass = StringTableItem
+                    item_class = StringTableItem
                 elif datatype == 'bool':
-                    QTableWidgetItemClass = BoolTableItem
+                    item_class = BoolTableItem
                 elif datatype == 'rank':
-                    QTableWidgetItemClass = RankTableItem
+                    item_class = RankTableItem
                 else:
-                    QTableWidgetItemClass = QTableWidgetItem
-                    logging.warning('Using default QTableWidgetItemClass!')
+                    item_class = QTableWidgetItem
+                    logging.warning('Using default item_class!')
 
-                tableWidget.setItem(
-                        i, col_index, QTableWidgetItemClass(cell_value))
+                table_widget.setItem(i, col_index, item_class(cell_value))
 
-            if player in selectedPlayers and not self._adding_player:
-                selRange = QTableWidgetSelectionRange(
-                    i, 0, i, tableWidget.columnCount() - 1)
-                tableWidget.blockSignals(True)
-                tableWidget.setRangeSelected(selRange, True)
-                tableWidget.blockSignals(False)
+            if player in selected_players and not self._adding_player:
+                selection_range = QTableWidgetSelectionRange(
+                    i, 0, i, table_widget.columnCount() - 1)
+                table_widget.blockSignals(True)
+                table_widget.setRangeSelected(selection_range, True)
+                table_widget.blockSignals(False)
 
         if self._adding_player:
-            tableWidget.blockSignals(True)
-            selRange = QTableWidgetSelectionRange(
-                row_count - 1, 0, row_count - 1, tableWidget.columnCount() - 1)
-            tableWidget.setRangeSelected(selRange, True)
-            tableWidget.blockSignals(False)
+            table_widget.blockSignals(True)
+            selection_range = QTableWidgetSelectionRange(
+                row_count - 1, 0, row_count - 1, table_widget.columnCount() - 1)
+            table_widget.setRangeSelected(selection_range, True)
+            table_widget.blockSignals(False)
 
-        tableWidget.setSortingEnabled(True)
-        #tableWidget.setCurrentCell(currentRow, currentColumn)
-        tableWidget.itemSelectionChanged.emit()
+        table_widget.setSortingEnabled(True)
+        #table_widget.setCurrentCell(currentRow, currentColumn)
+        table_widget.itemSelectionChanged.emit()
 
     def players_selected(self):
-        selectedItems = self.ui.tableWidget.selectedItems()
-        selectedRows = set([item.row() for item in selectedItems])
-        selectedPlayers = set([self.playerAtRow(row) for row in selectedRows])
+        selected_items = self.ui.table_widget.selectedItems()
+        selected_rows = set([item.row() for item in selected_items])
+        selected_players = set([self.player_at_row(row) for row in selected_rows])
 
-        if self._editedPlayers == selectedPlayers:
+        if self._edited_players == selected_players:
             return
         else:
-            for edited_player in self._editedPlayers:
+            for edited_player in self._edited_players:
                 if edited_player not in self.tournament.players:
-                    logging.error('player {0} does not exist in '
-                           'database!').format(edited_player.player_index)
-                    self._editedPlayers = set()
+                    logging.error(
+                        'player {0} does not exist in database!'.format(
+                            edited_player.player_index))
+                    self._edited_players = set()
                     return
 
-            if not selectedPlayers:
+            if not selected_players:
                 self.clear_edited_players()
                 return
-            elif self._editedPlayers:
+            elif self._edited_players:
                 pass
             elif self._adding_player:
                 self._adding_player = False
                 self.update()
 
-            self._editedPlayers = selectedPlayers
+            self._edited_players = selected_players
 
-            for selectedPlayer in selectedPlayers:
+            for selectedPlayer in selected_players:
                 for field in self.tournament.config['player_fields']:
-                    self.ui.player_fields[field.name].setDBValue(
+                    self.ui.player_fields[field.name].set_db_value(
                         selectedPlayer[field.name])
                 break
 
     def clear_edited_players(self):
-        self._editedPlayers = set()
+        self._edited_players = set()
         if self._adding_player:
             self._adding_player = False
             self.update()
         for field in self.tournament.config['player_fields']:
             self.ui.player_fields[field.name].clear()
 
-        tableWidget = self.ui.tableWidget
-        selected_ranges = tableWidget.selectedRanges()
-        tableWidget.blockSignals(True)
+        table_widget = self.ui.table_widget
+        selected_ranges = table_widget.selectedRanges()
+        table_widget.blockSignals(True)
         for selected_range in selected_ranges:
-            tableWidget.setRangeSelected(selected_range, False)
-        tableWidget.blockSignals(False)
+            table_widget.setRangeSelected(selected_range, False)
+        table_widget.blockSignals(False)
 
     def save_edited_players(self):
         if self._adding_player:
             params = {}
             for field in self.tournament.config['player_fields']:
-                params[field.name] = self.ui.player_fields[field.name].getDBValue()
+                params[field.name] = self.ui.player_fields[field.name].get_db_value()
             player = self.tournament.add_player(params)
-            self._editedPlayers.add(player)
+            self._edited_players.add(player)
 
-        for edited_player in self._editedPlayers:
+        for edited_player in self._edited_players:
             for field in self.tournament.config['player_fields']:
-                edited_player[field.name] = self.ui.player_fields[field.name].getDBValue()
+                edited_player[field.name] = self.ui.player_fields[field.name].get_db_value()
 
         #NB: The set is invalid because hashes have changed. Clearing will take
         #    care of it. So no worries.
         self.clear_edited_players()
     
     def delete_player_clicked(self):
-        for edited_player in self._editedPlayers:
+        for edited_player in self._edited_players:
             self.tournament.remove_player(edited_player)
         self.clear_edited_players()
         self.update()
