@@ -168,12 +168,17 @@ class SortPlayers(QSortFilterProxyModel):
     LEVELDICT = {'p': 1, 'd': 2, 'k': 3}
     def __init__(self, *args, **kwargs):
         super(SortPlayers, self).__init__(*args, **kwargs)
+
         locale_name = "sv_SE.UTF-8"
         try:
             locale.setlocale(locale.LC_ALL, locale_name)
         except locale.Error:
-            logging.warning('Could not set locale {0}. Using system '
-                            'default.'.format(locale_name))
+            # TODO: Ugh... ugly workaround:
+            try:
+                locale.setlocale(locale.LC_ALL, 'swedish')
+            except locale.Error:
+                logging.warning('Could not set locale {0}. Using system '
+                                'default.'.format(locale_name))
         print(locale)
 
     def _text_less_than(self, data1, data2):
