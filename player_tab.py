@@ -199,12 +199,12 @@ class PlayerTab(QWidget):
 
     def player_at_row(self, row):
         """Retrieve player object from row number."""
-        player_index = str(self.ui.tableWidget.item(row, 0).text())
+        player_index = str(self.ui.table_widget.item(row, 0).text())
         return self.tournament.players[player_index]
 
     def update(self):
         """Update GUI from underlying data model."""
-        table_widget = self.ui.tableWidget
+        table_widget = self.ui.table_widget
         table_widget.setSortingEnabled(False)
 
         selected_items = table_widget.selectedItems()
