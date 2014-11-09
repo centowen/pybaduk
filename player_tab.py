@@ -188,7 +188,7 @@ class SortPlayers(QSortFilterProxyModel):
                 level = SortPlayers.LEVELDICT[rank[-1]]
                 number = int(rank[:-1])
             except (KeyError, ValueError):
-                logging.error('Invalid rank: {0}'.format(value))
+                logging.error('Invalid rank: {0}'.format(rank))
                 level = None
                 number = None
         return level, number
@@ -219,23 +219,29 @@ class SortPlayers(QSortFilterProxyModel):
             logging.warning('Don\'t know how to sort field type {}.'.format(field_type))
             return data1 < data2
 
+
 class PlayerTableModel(QAbstractTableModel):
     """
-    A model containing players. Will only update when :meth:`update` is called.
+    A model containing players. Will only update_data when :meth:`update_data`
+    is called.
     """
 
     def __init__(self, players, fields):
         QAbstractTableModel.__init__(self)
         self._players = None
         self._fields = None
-        self.update(players, fields)
+        self.update_data(players, fields)
 
     def get_column_type(self, column):
         return self._fields[column].datatype
 
-    def update(self, players, fields):
+    def update_data(self, players, fields):
         self._players = list(players)
         self._fields = [field for field in fields if field.visible]
+
+    def headerData(self, section, orientation, role):
+        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+            return self._fields[section].name
 
     def columnCount(self, parent):
         if parent.isValid():
@@ -302,7 +308,7 @@ class PlayerTab(QWidget):
         player_index = str(self.ui.table_widget.item(row, 0).text())
         return self._tournament.players[player_index]
 
-    # def update(self):
+    # def update_data(self):
     #     """Update GUI from underlying data model."""
     #     table_widget = self.ui.table_widget
     #     table_widget.setSortingEnabled(False)
