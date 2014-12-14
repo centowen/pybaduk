@@ -65,12 +65,22 @@ import locale
 import logging
 import re
 
-from PyQt4.QtCore import QAbstractTableModel, Qt
+from PyQt4.QtCore import QAbstractTableModel, Qt, QModelIndex, QVariant
 from PyQt4.QtGui import (QWidget, QTableWidgetItem,
                          QSpinBox, QValidator, QLabel, QLineEdit,
-                         QSortFilterProxyModel)
+                         QSortFilterProxyModel, QItemSelectionModel)
 
 from player_tab_ui import Ui_PlayerTab
+
+
+GET_UNFORMATTED_ROLE = Qt.UserRole
+GET_PLAYER_ROLE = Qt.UserRole + 1
+
+
+class EditState(object):
+    def __init__(self):
+        self.players = set()
+        self.adding_player = False
 
 
 class PlayerFieldLineEdit(QLineEdit):
@@ -228,6 +238,7 @@ class StringTableItem(QTableWidgetItem):
 
 class SortPlayers(QSortFilterProxyModel):
     LEVELDICT = {'p': 1, 'd': 2, 'k': 3}
+
     def __init__(self, *args, **kwargs):
         super(SortPlayers, self).__init__(*args, **kwargs)
 
@@ -276,8 +287,8 @@ class SortPlayers(QSortFilterProxyModel):
 
     def lessThan(self, index1, index2):
         field_type = self.sourceModel().get_column_type(index1.column())
-        data1 = self.sourceModel().data(index1, Qt.UserRole)
-        data2 = self.sourceModel().data(index2, Qt.UserRole)
+        data1 = self.sourceModel().data(index1, GET_UNFORMATTED_ROLE)
+        data2 = self.sourceModel().data(index2, GET_UNFORMATTED_ROLE)
         if field_type == 'text':
             return self._text_less_than(data1, data2)
         elif field_type == 'rank':
@@ -285,6 +296,15 @@ class SortPlayers(QSortFilterProxyModel):
         else:
             logging.warning('Don\'t know how to sort field type {}.'.format(field_type))
             return data1 < data2
+
+
+class PlayerContainer(QVariant):
+    def __init__(self, player):
+        super(PlayerContainer, self).__init__()
+        self._player = player
+
+    def get_player(self):
+        return self._player
 
 
 class PlayerTableModel(QAbstractTableModel):
@@ -329,8 +349,10 @@ class PlayerTableModel(QAbstractTableModel):
         col = index.column()
         if role == Qt.DisplayRole:
             return unicode(self._players[row][self._fields[col].name])
-        elif role == Qt.UserRole:
+        elif role == GET_UNFORMATTED_ROLE:
             return self._players[row][self._fields[col].name]
+        elif role == GET_PLAYER_ROLE:
+            return self._players[row].player_index
 
 
 class PlayerTab(QWidget):
@@ -338,8 +360,7 @@ class PlayerTab(QWidget):
     def __init__(self, tournament, parent=None):
         QWidget.__init__(self, parent)
         self._tournament = tournament
-        self._edited_players = set()
-        self._adding_player = False
+        self._edit_state = EditState()
         self.player_model = PlayerTableModel(
             self._tournament.players, self._tournament.config['player_fields'])
         self.sorted_model = SortPlayers()
@@ -359,12 +380,12 @@ class PlayerTab(QWidget):
             self.ui.player_edit_layout.insertRow(
                 i, QLabel(field.name), field_widget)
 
-        self.ui.table_widget.verticalHeader().hide()
-        self.ui.table_widget.resizeColumnsToContents()
-        self.ui.table_widget.horizontalHeader().setStretchLastSection(True)
-        self.ui.table_widget.setModel(self.sorted_model)
-
-        # self.ui.table_widget.itemSelectionChanged.connect(self.players_selected)
+        self.ui.player_list.verticalHeader().hide()
+        self.ui.player_list.resizeColumnsToContents()
+        self.ui.player_list.horizontalHeader().setStretchLastSection(True)
+        self.ui.player_list.setModel(self.sorted_model)
+        self.ui.player_list.selectionModel().selectionChanged.connect(
+            self.players_selected)
         self.ui.add_player.clicked.connect(self.add_player_clicked)
         self.ui.delete_player.clicked.connect(self.delete_player_clicked)
         self.ui.ok_cancel.rejected.connect(self.clear_edited_players)
@@ -372,7 +393,7 @@ class PlayerTab(QWidget):
 
     def player_at_row(self, row):
         """Retrieve player object from row number."""
-        player_index = str(self.ui.table_widget.item(row, 0).text())
+        player_index = str(self.ui.player_list.item(row, 0).text())
         return self._tournament.players[player_index]
 
     # def update_data(self):
@@ -447,53 +468,38 @@ class PlayerTab(QWidget):
     #     #table_widget.setCurrentCell(currentRow, currentColumn)
     #     table_widget.itemSelectionChanged.emit()
 
-    def players_selected(self):
-        selected_items = self.ui.table_widget.selectedItems()
-        selected_rows = set([item.row() for item in selected_items])
-        selected_players = set([self.player_at_row(row) for row in selected_rows])
+    def get_player_at_row(self, index):
+        player_index = str(self.sorted_model.data(index, GET_PLAYER_ROLE).toString())
+        return self._tournament.players[player_index]
 
-        if self._edited_players == selected_players:
-            return
-        else:
-            for edited_player in self._edited_players:
-                if edited_player not in self._tournament.players:
-                    logging.error(
-                        'player {0} does not exist in database!'.format(
-                            edited_player.player_index))
-                    self._edited_players = set()
-                    return
+    def players_selected(self, selected, deselected):
+        selected = [i for i in selected.indexes() if i.column() == 0]
+        deselected = [i for i in deselected.indexes() if i.column() == 0]
 
-            if not selected_players:
-                self.clear_edited_players()
-                return
-            elif self._edited_players:
-                pass
-            elif self._adding_player:
-                self._adding_player = False
-                self.update()
+        for index in selected:
+            self._edit_state.players.add(self.get_player_at_row(index))
 
-            self._edited_players = selected_players
+        for index in deselected:
+            self._edit_state.players.remove(self.get_player_at_row(index))
 
-            for selectedPlayer in selected_players:
+        print(self._edit_state.players)
+
+        if self._edit_state.players:
+            for player in self._edit_state.players:
                 for field in self._tournament.config['player_fields']:
                     self._player_fields[field.name].set_db_value(
-                        selectedPlayer[field.name])
+                        player[field.name])
+                # Here should be fancy code to handle multi edit.
                 break
+        else:
+            for field in self._tournament.config['player_fields']:
+                self._player_fields[field.name].clear()
 
     def clear_edited_players(self):
-        self._edited_players = set()
-        if self._adding_player:
-            self._adding_player = False
-            self.update()
-        for field in self._tournament.config['player_fields']:
-            self._player_fields[field.name].clear()
+        # if self._adding_player:
+        #     self._adding_player = False
+        self.ui.player_list.selectionModel().select(QModelIndex(), QItemSelectionModel.Clear)
 
-        table_widget = self.ui.table_widget
-        selected_ranges = table_widget.selectedRanges()
-        table_widget.blockSignals(True)
-        for selected_range in selected_ranges:
-            table_widget.setRangeSelected(selected_range, False)
-        table_widget.blockSignals(False)
 
     def save_edited_players(self):
         if self._adding_player:
@@ -512,6 +518,7 @@ class PlayerTab(QWidget):
         self.clear_edited_players()
     
     def delete_player_clicked(self):
+        self.player_model
         for edited_player in self._edited_players:
             self._tournament.remove_player(edited_player)
         self.clear_edited_players()

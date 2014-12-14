@@ -75,7 +75,7 @@ Preliminary: 0</string>
         </widget>
        </item>
        <item>
-        <widget class="QTableView" name="table_widget">
+        <widget class="QTableView" name="player_list">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
            <horstretch>0</horstretch>
@@ -176,7 +176,7 @@ Preliminary: 0</string>
   </layout>
  </widget>
  <tabstops>
-  <tabstop>table_widget</tabstop>
+  <tabstop>player_list</tabstop>
   <tabstop>ok_cancel</tabstop>
   <tabstop>lineEdit_6</tabstop>
   <tabstop>listWidget</tabstop>
