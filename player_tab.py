@@ -371,16 +371,25 @@ class PlayerTab(QWidget):
             self.ui.player_edit_layout.insertRow(
                 i, QLabel(field.name), field_widget)
 
+        self.update_player_count()
+
         self.ui.player_list.verticalHeader().hide()
         self.ui.player_list.resizeColumnsToContents()
         self.ui.player_list.horizontalHeader().setStretchLastSection(True)
         self.ui.player_list.setModel(self.sorted_model)
         self.ui.player_list.selectionModel().selectionChanged.connect(
             self.players_selected)
+        self.player_model.layoutChanged.connect(self.update_player_count)
+        self.player_model.modelReset.connect(self.update_player_count)
         self.ui.add_player.clicked.connect(self.add_player_clicked)
         self.ui.delete_player.clicked.connect(self.delete_player_clicked)
         self.ui.ok_cancel.rejected.connect(self.clear_edited_players)
         self.ui.ok_cancel.accepted.connect(self.save_edited_players)
+
+    def update_player_count(self):
+        new_count = self.player_model.rowCount(QModelIndex())
+        self.ui.player_count.setText(
+            u"Registered: {}\nPreliminary: {}".format(0, new_count))
 
     def get_player_at_row(self, index):
         player_index = str(self.sorted_model.data(index, GET_PLAYER_ROLE).toString())
