@@ -298,15 +298,6 @@ class SortPlayers(QSortFilterProxyModel):
             return data1 < data2
 
 
-class PlayerContainer(QVariant):
-    def __init__(self, player):
-        super(PlayerContainer, self).__init__()
-        self._player = player
-
-    def get_player(self):
-        return self._player
-
-
 class PlayerTableModel(QAbstractTableModel):
     """
     A model containing players. Will only update_data when :meth:`update_data`
