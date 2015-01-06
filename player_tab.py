@@ -149,10 +149,10 @@ class RankSpinBox(QSpinBox):
         self.setValue(self.valueFromText(db_value))
 
     def get_db_value(self):
-        if self.value() == RankSpinBox._minvalue:
+        if self.value() != RankSpinBox._minvalue:
+            return self.textFromValue(self.value())
+        else:
             return None
-
-        return self.textFromValue(self.value())
 
     def clear(self):
         self.setValue(RankSpinBox._minvalue)
@@ -391,83 +391,6 @@ class PlayerTab(QWidget):
         self.ui.ok_cancel.rejected.connect(self.clear_edited_players)
         self.ui.ok_cancel.accepted.connect(self.save_edited_players)
 
-    def player_at_row(self, row):
-        """Retrieve player object from row number."""
-        player_index = str(self.ui.player_list.item(row, 0).text())
-        return self._tournament.players[player_index]
-
-    # def update_data(self):
-    #     """Update GUI from underlying data model."""
-    #     table_widget = self.ui.table_widget
-    #     table_widget.setSortingEnabled(False)
-    #
-    #     selected_items = table_widget.selectedItems()
-    #     selected_rows = set([item.row() for item in selected_items])
-    #     selected_players = [self.player_at_row(row) for row in selected_rows]
-    #
-    #     table_widget.blockSignals(True)
-    #     table_widget.clear()
-    #     table_widget.blockSignals(False)
-    #     row_count = len(self.tournament.players)
-    #     if self._adding_player:
-    #         row_count += 1
-    #     table_widget.setRowCount(row_count)
-    #
-    #     table_header = ['player_index']
-    #     for field in self.tournament.config['player_fields']:
-    #         if field.visible:
-    #             table_header.append(field.name)
-    #
-    #     # Add player index as column zero but don't show it.
-    #     table_widget.setColumnCount(len(table_header))
-    #     table_widget.setHorizontalHeaderLabels(table_header)
-    #     table_widget.setColumnHidden(0, True)
-    #
-    #     for i, player in enumerate(self.tournament.players):
-    #         for col_index, col_name in enumerate(table_header):
-    #             if col_index == 0:
-    #                 cell_value = player.player_index
-    #             else:
-    #                 cell_value = player[col_name]
-    #
-    #             if cell_value is None:
-    #                 cell_value = u''
-    #
-    #             datatype = None
-    #             for field in self.tournament.config['player_fields']:
-    #                 if field.name == col_name:
-    #                     datatype = field.datatype
-    #
-    #             if datatype == 'text':
-    #                 item_class = StringTableItem
-    #             elif datatype == 'bool':
-    #                 item_class = BoolTableItem
-    #             elif datatype == 'rank':
-    #                 item_class = RankTableItem
-    #             else:
-    #                 item_class = QTableWidgetItem
-    #                 logging.warning('Using default item_class!')
-    #
-    #             table_widget.setItem(i, col_index, item_class(cell_value))
-    #
-    #         if player in selected_players and not self._adding_player:
-    #             selection_range = QTableWidgetSelectionRange(
-    #                 i, 0, i, table_widget.columnCount() - 1)
-    #             table_widget.blockSignals(True)
-    #             table_widget.setRangeSelected(selection_range, True)
-    #             table_widget.blockSignals(False)
-    #
-    #     if self._adding_player:
-    #         table_widget.blockSignals(True)
-    #         selection_range = QTableWidgetSelectionRange(
-    #             row_count - 1, 0, row_count - 1, table_widget.columnCount() - 1)
-    #         table_widget.setRangeSelected(selection_range, True)
-    #         table_widget.blockSignals(False)
-    #
-    #     table_widget.setSortingEnabled(True)
-    #     #table_widget.setCurrentCell(currentRow, currentColumn)
-    #     table_widget.itemSelectionChanged.emit()
-
     def get_player_at_row(self, index):
         player_index = str(self.sorted_model.data(index, GET_PLAYER_ROLE).toString())
         return self._tournament.players[player_index]
@@ -480,9 +403,11 @@ class PlayerTab(QWidget):
             self._edit_state.players.add(self.get_player_at_row(index))
 
         for index in deselected:
-            self._edit_state.players.remove(self.get_player_at_row(index))
-
-        print(self._edit_state.players)
+            player = self.get_player_at_row(index)
+            try:
+                self._edit_state.players.remove(player)
+            except KeyError:
+                pass
 
         if self._edit_state.players:
             for player in self._edit_state.players:
@@ -498,25 +423,29 @@ class PlayerTab(QWidget):
     def clear_edited_players(self):
         # if self._adding_player:
         #     self._adding_player = False
-        self.ui.player_list.selectionModel().select(QModelIndex(), QItemSelectionModel.Clear)
-
+        self._edit_state.players.clear()
+        self.ui.player_list.selectionModel().select(
+            QModelIndex(), QItemSelectionModel.Clear)
 
     def save_edited_players(self):
-        if self._adding_player:
-            params = {}
-            for field in self._tournament.config['player_fields']:
-                params[field.name] = self._player_fields[field.name].get_db_value()
-            player = self._tournament.add_player(params)
-            self._edited_players.add(player)
+        # if self._adding_player:
+        #     params = {}
+        #     for field in self._tournament.config['player_fields']:
+        #         params[field.name] = self._player_fields[field.name].get_db_value()
+        #     player = self._tournament.add_player(params)
+        #     self._edited_players.add(player)
 
-        for edited_player in self._edited_players:
+        for edited_player in self._edit_state.players:
             for field in self._tournament.config['player_fields']:
                 edited_player[field.name] = self._player_fields[field.name].get_db_value()
+
+        self.player_model.update_data(
+            self._tournament.players, self._tournament.config['player_fields'])
 
         #NB: The set is invalid because hashes have changed. Clearing will take
         #    care of it. So no worries.
         self.clear_edited_players()
-    
+
     def delete_player_clicked(self):
         self.player_model
         for edited_player in self._edited_players:
