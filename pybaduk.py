@@ -72,6 +72,7 @@ import egdcodec
 
 from qttest_ui import Ui_MainWindow
 from player_tab import PlayerTab
+from pairing_tab import PairingTab
 from tournament import Tournament
 
 
@@ -112,8 +113,10 @@ def main():
     updatetimer.start(500)
 
     playerTab = PlayerTab(gbgopen)
+    pairingTab = PairingTab(gbgopen)
     mainwindow.ui.tabWidget.clear()
     mainwindow.ui.tabWidget.addTab(playerTab, "Players")
+    mainwindow.ui.tabWidget.addTab(pairingTab, "Pairings")
     mainwindow.show()
     sys.exit(app.exec_())
 

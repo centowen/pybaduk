@@ -104,6 +104,10 @@ class TournamentConfig(GitEntry):
                     'player_fields': [Field(u'Given name', 'text'),
                                       Field(u'Family name', 'text'),
                                       Field(u'Rank', 'rank')],
+                    'pairing_fields': [Field(u'Player 1', 'text'), 
+                                       Field(u'Player 2', 'text'),
+                                       Field(u'Group', 'text', visible=False),
+                                       Field(u'Result', 'text', visible=False)],
                     'tournament_type': 'dummy_lottning'}
         else:
             params = None

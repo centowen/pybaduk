@@ -64,7 +64,7 @@ import os.path
 import json
 
 from git import GitEntry
-from players import Player
+from players import Player, generate_player_filename
 
 
 class PairingModError(Exception):
@@ -73,39 +73,27 @@ class PairingModError(Exception):
 
 def _generate_filename(params):
 
-    team1 = '_'.join(params['team1'])
-    team2 = '_'.join(params['team2'])
-
-    return '{0}-{1}'.format(team1, team2)
+    player1 = generate_player_filename(params['Player 1'])
+    player2 = generate_player_filename(params['Player 2'])
+    return u'{0}-{1}-{2}'.format(player1, player2,
+                                 params['Group']).encode('ascii', errors='egd')
 
 
 class Pairing(GitEntry):
     """Class to manage a pairing between two teams."""
-    def __init__(self, repo, in_params=None, index=None, *args, **kwargs):
+
+    required_fields = [u'Player 1', u'Player 2', u'Group']
+
+    def __init__(self, repo, params=None, index=None, *args, **kwargs):
 
         self.repo = repo
-        params = None
 
-        if in_params:
-            params = in_params.copy()
-
-            if not 'team1' in params and 'player1' in params:
-                params['team1'] = [params['player1']]
-            if not 'team2' in params and 'player2' in params:
-                params['team2'] = [params['player2']]
-
-            if 'player1' in params:
-                del params['player1']
-            if 'player2' in params:
-                del params['player2']
-
-            params['team1'] = [player.player_index 
-                               for player in params['team1']]
-            params['team2'] = [player.player_index 
-                               for player in params['team2']]
-
+        if params:
+            for field in Pairing.required_fields:
+                if field not in params:
+                    raise PairingModError(
+                        'Required field {0} missing.'.format(field))
             self.pairing_index = _generate_filename(params)
-
         elif index is not None:
             self.pairing_index = index
         else:
@@ -117,10 +105,19 @@ class Pairing(GitEntry):
                 *args, **kwargs)
 
     def __getitem__(self, key):
-        return super(Pairing, self).__getitem__(key)
+        if key == u'Player 1' or key == u'Player 2':
+            return Player(self.repo, index = super(Pairing, self).__getitem__(key))
+        else:
+            return super(Pairing, self).__getitem__(key)
 
     def __delitem__(self, key):
         super(Pairing, self).__delitem__(key)
+
+    def serialize(self, data):
+        data = data.copy()
+        data[u'Player 1'] = data[u'Player 1'].getindex()
+        data[u'Player 2'] = data[u'Player 2'].getindex()
+        return data
 
 
 class PairingList(object):
@@ -140,8 +137,9 @@ class PairingList(object):
 
     def __iter__(self):
         for filename in os.listdir(self.fq_pairingdir_path):
-            yield Pairing(self.repo, path=self.rel_pairingdir_path, pairing_index=filename)
+            print(filename)
+            yield Pairing(self.repo, index=filename)
 
     def append(self, params):
-        return Pairing(self.repo, in_params=params)
+        return Pairing(self.repo, params=params)
 
