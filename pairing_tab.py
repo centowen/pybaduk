@@ -1,15 +1,12 @@
-from functools import total_ordering
-import locale
-import logging
-from PyQt4.QtCore import QAbstractTableModel, Qt, QModelIndex, QVariant
-from PyQt4.QtGui import (QWidget, QTableWidgetItem,
-                         QSpinBox, QValidator, QLabel, QLineEdit,
-                         QSortFilterProxyModel, QItemSelectionModel)
+from PyQt4.QtCore import QAbstractTableModel, Qt
+from PyQt4.QtGui import (QWidget, QLabel, QLineEdit)
 
 from pairing_tab_ui import Ui_PairingTab
 
+
 GET_UNFORMATTED_ROLE = Qt.UserRole
 GET_PAIRING_ROLE = Qt.UserRole + 1
+
 
 class PairingFieldLineEdit(QLineEdit):
     def get_db_value(self):
@@ -22,6 +19,7 @@ class PairingFieldLineEdit(QLineEdit):
 
     def clear(self):
         self.setText('')
+
 
 class PairingTableModel(QAbstractTableModel):
     def __init__(self, pairings, fields):
@@ -66,6 +64,7 @@ class PairingTableModel(QAbstractTableModel):
         elif role == GET_PAIRING_ROLE:
             return self._pairings[row].pairing_index
 
+
 class PairingTab(QWidget):
     def __init__(self, tournament, parent=None):
         QWidget.__init__(self, parent)
@@ -88,4 +87,3 @@ class PairingTab(QWidget):
         self.ui.pairing_list.resizeColumnsToContents()
         self.ui.pairing_list.horizontalHeader().setStretchLastSection(True)
         self.ui.pairing_list.setModel(self.pairing_model)
-
