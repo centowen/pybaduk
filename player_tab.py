@@ -329,15 +329,15 @@ class PlayerTableModel(QAbstractTableModel):
     def rowCount(self, parent):
         if parent.isValid():
             return 0
-        # TODO : editing?
+        # TODO : adding player?
         return len(self._players)
 
-    def data(self, index, role):
-        if not index.isValid():
+    def data(self, qt_index, role):
+        if not qt_index.isValid():
             return None
 
-        row = index.row()
-        col = index.column()
+        row = qt_index.row()
+        col = qt_index.column()
         if role == Qt.DisplayRole:
             return unicode(self._players[row][self._fields[col].name])
         elif role == GET_UNFORMATTED_ROLE:
@@ -386,6 +386,12 @@ class PlayerTab(QWidget):
         player_index = str(self.sorted_model.data(index, GET_PLAYER_ROLE).toString())
         return self._tournament.players[player_index]
 
+    def update_player_model(self):
+        self.player_model.beginResetModel()
+        self.player_model.update_data(
+            self._tournament.players, self._tournament.config['player_fields'])
+        self.player_model.endResetModel()
+
     def players_selected(self, selected, deselected):
         selected = [i for i in selected.indexes() if i.column() == 0]
         deselected = [i for i in deselected.indexes() if i.column() == 0]
@@ -430,21 +436,16 @@ class PlayerTab(QWidget):
             for field in self._tournament.config['player_fields']:
                 edited_player[field.name] = self._player_fields[field.name].get_db_value()
 
-        self.player_model.update_data(
-            self._tournament.players, self._tournament.config['player_fields'])
-
-        #NB: The set is invalid because hashes have changed. Clearing will take
-        #    care of it. So no worries.
+        self.update_player_model()
         self.clear_edited_players()
 
     def delete_player_clicked(self):
-        self.player_model
-        for edited_player in self._edited_players:
+        for edited_player in self._edit_state.players:
             self._tournament.remove_player(edited_player)
         self.clear_edited_players()
-        self.update()
+        self.update_player_model()
 
     def add_player_clicked(self):
         self.clear_edited_players()
-        self._adding_player = True
+        self._edit_state.adding_player = True
         self.update()

@@ -197,7 +197,7 @@ class Tournament(object):
 
     def remove_player(self, player):
         """Tries to remove a player.
-        
+
         Raises RemovePlayerError if the player exists in any pairings."""
         # pairings = []
         # for round_ in self._pairings:
