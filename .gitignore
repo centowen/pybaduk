@@ -1,3 +1,4 @@
 *.pyc
 player_tab_ui.py
 qttest_ui.py
+pairing_tab_ui.py
