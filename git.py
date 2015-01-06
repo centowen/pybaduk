@@ -88,7 +88,7 @@ class GitEntry(object):
         self.fq_path = os.path.join(repo.path, self.rel_path) 
 
         if params:
-            dump_file(params, self.fq_path)
+            dump_file(self.serialize(params), self.fq_path)
             repo.stage(self.rel_path)
             repo.do_commit('Updating entry {0} in {1}.'.format(
                 filename, git_table), committer=self.session_id)
@@ -123,7 +123,7 @@ class GitEntry(object):
     def __delitem__(self, key):
         data = load_file(self.fq_path)
         del data[key]
-        dump_file(data, self.fq_path)
+        dump_file(self.serialize(data), self.fq_path)
         self.repo.stage(self.rel_path)
         self.repo.do_commit('Modifying .', committer=self.session_id)
 
@@ -138,6 +138,9 @@ class GitEntry(object):
     def __setitem__(self, key, value):
         data = load_file(self.fq_path)
         data[key] = value
-        dump_file(data, self.fq_path)
+        dump_file(self.serialize(data), self.fq_path)
         self.repo.stage(self.rel_path)
         self.repo.do_commit('Modifying .', committer=self.session_id)
+
+    def serialize(self, data):
+        return data

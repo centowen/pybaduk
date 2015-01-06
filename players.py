@@ -65,7 +65,7 @@ import os.path
 from git import GitEntry
 
 
-def _generate_filename(params):
+def generate_player_filename(params):
     return u'{0}_{1}'.format(params['Given name'],
         params['Family name']).encode('ascii', errors='egd')
 
@@ -90,7 +90,7 @@ class Player(GitEntry):
                 if field not in params:
                     raise PlayerModError(
                         'Required field {0} missing.'.format(field))
-            self.player_index = _generate_filename(params)
+            self.player_index = generate_player_filename(params)
         elif index is not None:
             self.player_index = index
         else:

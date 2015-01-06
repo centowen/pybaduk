@@ -4,8 +4,9 @@ class TournamentType(object):
         players = list(tournament.players)
         for i in range(0, len(players)-1, 2):
             params = {}
-            params['player1'] = players[i]
-            params['player2'] = players[i+1]
-            params['group'] = group
+            params['Player 1'] = players[i]
+            params['Player 2'] = players[i+1]
+            params['Group'] = group
+            params['Result'] = None
             tournament.pairings.append(params)
 
