@@ -68,7 +68,8 @@ import re
 from PyQt4.QtCore import QAbstractTableModel, Qt, QModelIndex, QVariant
 from PyQt4.QtGui import (QWidget, QTableWidgetItem,
                          QSpinBox, QValidator, QLabel, QLineEdit,
-                         QSortFilterProxyModel, QItemSelectionModel)
+                         QSortFilterProxyModel, QItemSelectionModel,
+                         QShortcut)
 
 from player_tab_ui import Ui_PlayerTab
 
@@ -373,6 +374,10 @@ class PlayerTab(QWidget):
 
         self.update_player_count()
 
+        return_shortcut = QShortcut(
+            Qt.Key_Return, self.ui.player_edit_box)
+        return_shortcut.setContext(Qt.WidgetWithChildrenShortcut)
+        return_shortcut.activated.connect(self.save_edited_players)
         self.ui.player_list.verticalHeader().hide()
         self.ui.player_list.resizeColumnsToContents()
         self.ui.player_list.horizontalHeader().setStretchLastSection(True)
@@ -445,8 +450,8 @@ class PlayerTab(QWidget):
             for field in self._tournament.config['player_fields']:
                 edited_player[field.name] = self._player_fields[field.name].get_db_value()
 
-        self.update_player_model()
         self.clear_edited_players()
+        self.update_player_model()
 
     def delete_player_clicked(self):
         for edited_player in self._edit_state.players:
