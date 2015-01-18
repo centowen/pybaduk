@@ -60,8 +60,8 @@
 # 
 # The precise terms and conditions for copying, distribution and
 # modification follow.
-from PyQt4.QtCore import QAbstractTableModel, Qt
-from PyQt4.QtGui import (QWidget, QLabel, QLineEdit)
+from PyQt4.QtCore import QAbstractTableModel, Qt, QModelIndex
+from PyQt4.QtGui import (QWidget, QLabel, QLineEdit, QItemSelectionModel)
 
 from pairing_tab_ui import Ui_PairingTab
 from pybaduk_qt import GET_UNFORMATTED_ROLE, GET_INDEX_ROLE
@@ -159,6 +159,7 @@ class PairingTab(QWidget):
         self.ui.pairing_list.setModel(self.sorted_model)
         self.ui.pairing_list.selectionModel().selectionChanged.connect(
             self.pairings_selected)
+        self.ui.delete_pairing.clicked.connect(self.delete_pairing_clicked)
 
 
     def get_pairing_at_row(self, index):
@@ -169,32 +170,21 @@ class PairingTab(QWidget):
     def pairings_selected(self, selected, deselected):
         selected = [i for i in selected.indexes() if i.column() == 0]
         deselected = [i for i in deselected.indexes() if i.column() == 0]
-        try:
-            print('Selection called with {} and {}.'.format(selected[0].row(), deselected[0].row()))
-        except:
-            print('peti')
 
-        print('-----')
         for index in selected:
-            print(self.get_pairing_at_row(index).pairing_index)
             self._edit_state.pairings.add(self.get_pairing_at_row(index))
 
-        print('-----')
         for index in deselected:
-            print(self.get_pairing_at_row(index).pairing_index)
             pairing = self.get_pairing_at_row(index)
             try:
                 self._edit_state.pairings.remove(pairing)
             except KeyError:
-                print('KeyError')
                 pass
-        print('-----')
 
 
         if self._edit_state.pairings:
             for pairing in self._edit_state.pairings:
                 for field in self._tournament.config['pairing_fields']:
-                    print(field.name,pairing[field.name],pairing.pairing_index, unicode(pairing[field.name]))
                     self._pairing_fields[field.name].set_db_value(
                         pairing[field.name])
                 # Here should be fancy code to handle multi edit.
