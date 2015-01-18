@@ -119,6 +119,12 @@ class Pairing(GitEntry):
         data[u'Player 2'] = data[u'Player 2'].getindex()
         return data
 
+    def __eq__(self, other):
+        return self.pairing_index == other.pairing_index
+    
+    def __hash__(self):
+        return hash(self.pairing_index)
+
 
 class PairingList(object):
     """Class managing a git repository with a list of pairings."""
@@ -137,9 +143,17 @@ class PairingList(object):
 
     def __iter__(self):
         for filename in os.listdir(self.fq_pairingdir_path):
-            print(filename)
             yield Pairing(self.repo, index=filename)
 
     def append(self, params):
         return Pairing(self.repo, params=params)
+
+    def __contains__(self, pairing):
+        for p in self:
+            if p == pairing:
+                return True
+        return False
+
+    def __getitem__(self, index):
+        return Pairing(self.repo, index=index)
 

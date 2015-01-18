@@ -72,10 +72,8 @@ from PyQt4.QtGui import (QWidget, QTableWidgetItem,
                          QShortcut)
 
 from player_tab_ui import Ui_PlayerTab
-
-
-GET_UNFORMATTED_ROLE = Qt.UserRole
-GET_PLAYER_ROLE = Qt.UserRole + 1
+from sort_model import SortModel
+from pybaduk_qt import GET_UNFORMATTED_ROLE, GET_INDEX_ROLE
 
 
 class EditState(object):
@@ -168,137 +166,6 @@ class BoolTableItem(QTableWidgetItem):
         super(BoolTableItem, self).__init__(self.name, *args, **kwargs)
 
 
-@total_ordering
-class RankTableItem(QTableWidgetItem):
-    LEVELDICT = {'p': 1, 'd': 2, 'k': 3}
-
-    def __init__(self, value, *args, **kwargs):
-        self.value = value
-        if not self.value:
-            self.value = 'No rank'
-            self.level = None
-            self.number = None
-        else:
-            try:
-                self.level = RankTableItem.LEVELDICT[self.value[-1]]
-                self.number = int(self.value[:-1])
-            except (KeyError, ValueError):
-                logging.error('Invalid rank: {0}'.format(value))
-                self.value = 'No rank'
-                self.level = None
-                self.number = None
-
-        super(RankTableItem, self).__init__(self.value, *args, **kwargs)
-
-    def __unicode__(self):
-        return self.value
-
-    def __str__(self):
-        return self.value
-
-    def __eq__(self, other):
-        return self.level == other.level and self.number == other.number
-
-    def __lt__(self, other):
-        if self.level and not other.level:
-            return True
-        elif not self.level:
-            return False
-        elif self.level != other.level:
-            return self.level < other.level
-        elif self.level == RankTableItem.LEVELDICT['k']:
-            return self.number < other.number
-        else:
-            return self.number > other.number
-
-
-@total_ordering
-class StringTableItem(QTableWidgetItem):
-    def __init__(self, value, *args, **kwargs):
-        locale_name = "sv_SE.UTF-8"
-        try:
-            locale.setlocale(locale.LC_ALL, locale_name)
-        except locale.Error:
-            logging.warning('Could not set locale {0}. Using system '
-                            'default.'.format(locale_name))
-        super(StringTableItem, self).__init__(value, *args, **kwargs)
-        self.value = value
-
-    def __unicode__(self):
-        return self.value
-
-    def __str__(self):
-        return self.value.encode('ascii', errors='egd')
-
-    def __eq__(self, other):
-        return locale.strcoll(self.value, other.value) == 0
-
-    def __lt__(self, other):
-        return locale.strcoll(self.value, other.value) < 0
-
-
-class SortPlayers(QSortFilterProxyModel):
-    LEVELDICT = {'p': 1, 'd': 2, 'k': 3}
-
-    def __init__(self, *args, **kwargs):
-        super(SortPlayers, self).__init__(*args, **kwargs)
-
-        locale_name = "sv_SE.UTF-8"
-        try:
-            locale.setlocale(locale.LC_ALL, locale_name)
-        except locale.Error:
-            # TODO: Ugh... ugly workaround:
-            try:
-                locale.setlocale(locale.LC_ALL, 'swedish')
-            except locale.Error:
-                logging.warning('Could not set locale {0}. Using system '
-                                'default.'.format(locale_name))
-        print(locale)
-
-    def _text_less_than(self, data1, data2):
-        return locale.strcoll(data1, data2) < 0
-
-    def _rank_to_level_and_value(self, rank):
-        if not rank:
-            level = None
-            number = None
-        else:
-            try:
-                level = SortPlayers.LEVELDICT[rank[-1]]
-                number = int(rank[:-1])
-            except (KeyError, ValueError):
-                logging.error('Invalid rank: {0}'.format(rank))
-                level = None
-                number = None
-        return level, number
-
-    def _rank_less_than(self, rank1, rank2):
-        rank1_level, rank1_number = self._rank_to_level_and_value(rank1)
-        rank2_level, rank2_number = self._rank_to_level_and_value(rank2)
-        if rank1_level and not rank2_level:
-            return True
-        elif not rank1_level:
-            return False
-        elif rank1_level != rank2_level:
-            return rank1_level < rank2_level
-        elif rank1_level == RankTableItem.LEVELDICT['k']:
-            return rank1_number < rank2_number
-        else:
-            return rank1_number > rank2_number
-
-    def lessThan(self, index1, index2):
-        field_type = self.sourceModel().get_column_type(index1.column())
-        data1 = self.sourceModel().data(index1, GET_UNFORMATTED_ROLE)
-        data2 = self.sourceModel().data(index2, GET_UNFORMATTED_ROLE)
-        if field_type == 'text':
-            return self._text_less_than(data1, data2)
-        elif field_type == 'rank':
-            return self._rank_less_than(data1, data2)
-        else:
-            logging.warning('Don\'t know how to sort field type {}.'.format(field_type))
-            return data1 < data2
-
-
 class PlayerTableModel(QAbstractTableModel):
     """
     A model containing players. Will only update_data when :meth:`update_data`
@@ -343,7 +210,7 @@ class PlayerTableModel(QAbstractTableModel):
             return unicode(self._players[row][self._fields[col].name])
         elif role == GET_UNFORMATTED_ROLE:
             return self._players[row][self._fields[col].name]
-        elif role == GET_PLAYER_ROLE:
+        elif role == GET_INDEX_ROLE:
             return self._players[row].player_index
 
 
@@ -355,7 +222,7 @@ class PlayerTab(QWidget):
         self._edit_state = EditState()
         self.player_model = PlayerTableModel(
             self._tournament.players, self._tournament.config['player_fields'])
-        self.sorted_model = SortPlayers()
+        self.sorted_model = SortModel()
         self.sorted_model.setSourceModel(self.player_model)
 
         self.ui = Ui_PlayerTab()
@@ -397,7 +264,7 @@ class PlayerTab(QWidget):
             u"Registered: {}\nPreliminary: {}".format(0, new_count))
 
     def get_player_at_row(self, index):
-        player_index = str(self.sorted_model.data(index, GET_PLAYER_ROLE).toString())
+        player_index = str(self.sorted_model.data(index, GET_INDEX_ROLE).toString())
         return self._tournament.players[player_index]
 
     def update_player_model(self):
