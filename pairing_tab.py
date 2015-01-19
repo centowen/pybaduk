@@ -67,6 +67,7 @@ from pairing_tab_ui import Ui_PairingTab
 from pybaduk_qt import GET_UNFORMATTED_ROLE, GET_INDEX_ROLE
 from sort_model import SortModel
 
+
 class EditState(object):
     def __init__(self):
         self.pairings = set()
@@ -80,9 +81,8 @@ class PairingFieldLineEdit(QLineEdit):
     def set_db_value(self, db_value):
         if db_value is None:
             db_value = ''
-# This isn't right.
+        # This isn't right.
         self.setText(unicode(db_value))
-
 
     def clear(self):
         self.setText('')
@@ -92,7 +92,7 @@ class PairingTableModel(QAbstractTableModel):
     def __init__(self, pairings, fields):
         QAbstractTableModel.__init__(self)
         self._pairings = None
-        self._field = None
+        self._fields = None
 
         self.update_data(pairings, fields)
 
@@ -138,7 +138,8 @@ class PairingTab(QWidget):
         self._tournament = tournament
         self._edit_state = EditState()
         self.pairing_model = PairingTableModel(
-            self._tournament.pairings, self._tournament.config['pairing_fields'])
+            self._tournament.pairings,
+            self._tournament.config['pairing_fields'])
         self.sorted_model = SortModel()
         self.sorted_model.setSourceModel(self.pairing_model)
 
@@ -161,11 +162,10 @@ class PairingTab(QWidget):
             self.pairings_selected)
         self.ui.delete_pairing.clicked.connect(self.delete_pairing_clicked)
 
-
     def get_pairing_at_row(self, index):
-        pairing_index = str(self.sorted_model.data(index, GET_INDEX_ROLE).toString())
+        pairing_index = str(
+            self.sorted_model.data(index, GET_INDEX_ROLE).toString())
         return self._tournament.pairings[pairing_index]
-
 
     def pairings_selected(self, selected, deselected):
         selected = [i for i in selected.indexes() if i.column() == 0]
@@ -181,7 +181,6 @@ class PairingTab(QWidget):
             except KeyError:
                 pass
 
-
         if self._edit_state.pairings:
             for pairing in self._edit_state.pairings:
                 for field in self._tournament.config['pairing_fields']:
@@ -196,7 +195,8 @@ class PairingTab(QWidget):
     def update_pairing_model(self):
         self.pairing_model.beginResetModel()
         self.pairing_model.update_data(
-            self._tournament.pairings, self._tournament.config['pairing_fields'])
+            self._tournament.pairings,
+            self._tournament.config['pairing_fields'])
         self.pairing_model.endResetModel()
 
     def clear_edited_pairings(self):
@@ -211,4 +211,3 @@ class PairingTab(QWidget):
             self._tournament.remove_pairing(edited_pairing)
         self.clear_edited_pairings()
         self.update_pairing_model()
-
