@@ -99,6 +99,23 @@ Preliminary: 0</string>
          </property>
         </widget>
        </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QLabel" name="filter_label">
+           <property name="text">
+            <string>Filter:</string>
+           </property>
+           <property name="buddy">
+            <cstring>filter_edit</cstring>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="filter_edit"/>
+         </item>
+        </layout>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="widget_2" native="true">
@@ -119,37 +136,14 @@ Preliminary: 0</string>
            <widget class="QWidget" name="widget_5" native="true">
             <layout class="QHBoxLayout" name="horizontalLayout_4">
              <item>
-              <spacer name="horizontalSpacer_4">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
               <widget class="QDialogButtonBox" name="ok_cancel">
                <property name="standardButtons">
                 <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
                </property>
+               <property name="centerButtons">
+                <bool>true</bool>
+               </property>
               </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_3">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
              </item>
             </layout>
            </widget>
@@ -160,14 +154,41 @@ Preliminary: 0</string>
        <item>
         <widget class="QGroupBox" name="groupBox_2">
          <property name="title">
-          <string>Search rating list</string>
+          <string>Round list</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
-           <widget class="QLineEdit" name="lineEdit_6"/>
+           <widget class="QTreeWidget" name="round_widget">
+            <property name="headerHidden">
+             <bool>true</bool>
+            </property>
+            <column>
+             <property name="text">
+              <string notr="true">1</string>
+             </property>
+            </column>
+           </widget>
           </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_3">
+         <property name="title">
+          <string>Unpaired players</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
           <item>
-           <widget class="QListWidget" name="listWidget"/>
+           <widget class="QTreeWidget" name="unpaired">
+            <property name="headerHidden">
+             <bool>true</bool>
+            </property>
+            <column>
+             <property name="text">
+              <string notr="true">1</string>
+             </property>
+            </column>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -181,8 +202,7 @@ Preliminary: 0</string>
  <tabstops>
   <tabstop>pairing_list</tabstop>
   <tabstop>ok_cancel</tabstop>
-  <tabstop>lineEdit_6</tabstop>
-  <tabstop>listWidget</tabstop>
+  <tabstop>round_widget</tabstop>
  </tabstops>
  <resources/>
  <connections/>
