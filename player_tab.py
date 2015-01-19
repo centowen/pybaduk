@@ -257,6 +257,8 @@ class PlayerTab(QWidget):
         self.ui.delete_player.clicked.connect(self.delete_player_clicked)
         self.ui.ok_cancel.rejected.connect(self.clear_edited_players)
         self.ui.ok_cancel.accepted.connect(self.save_edited_players)
+        self.ui.filter_edit.textChanged.connect(
+            self.sorted_model.setFilterRegExp)
 
     def update_player_count(self):
         new_count = self.player_model.rowCount(QModelIndex())
