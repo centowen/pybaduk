@@ -9,6 +9,7 @@ from PyQt4.QtGui import (QWidget, QTableWidgetItem,
                          QShortcut)
 
 from pybaduk_qt import GET_UNFORMATTED_ROLE, GET_INDEX_ROLE
+from unidecode import unidecode
 
 
 class SortModel(QSortFilterProxyModel):
@@ -38,7 +39,9 @@ class SortModel(QSortFilterProxyModel):
                 source_row, col_index, source_parent)
 
             regexp = self.filterRegExp()
-            if regexp.indexIn(self.sourceModel().data(index)) != -1:
+            text = self.sourceModel().data(index)
+            if (regexp.indexIn(text) != -1 or
+                    regexp.indexIn(unidecode(text)) != -1):
                 res = True
         return res
 
@@ -87,7 +90,8 @@ class SortModel(QSortFilterProxyModel):
         elif field_type == 'rank':
             return self._rank_less_than(data1, data2)
         else:
-            logging.warning('Don\'t know how to sort field type {}.'.format(field_type))
+            logging.warning(
+                'Don\'t know how to sort field type {}.'.format(field_type))
             return data1 < data2
 
 
