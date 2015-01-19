@@ -32,11 +32,15 @@ class SortModel(QSortFilterProxyModel):
                                 'default.'.format(locale_name))
 
     def filterAcceptsRow(self, source_row, source_parent):
-        index0 = self.sourceModel().index(source_row, 0, source_parent)
+        res = False
+        for col_index in range(self.sourceModel().columnCount(QModelIndex())):
+            index = self.sourceModel().index(
+                source_row, col_index, source_parent)
 
-        regexp = self.filterRegExp()
-        return regexp.indexIn(self.sourceModel().data(index0)) != -1 or
-                regexp.indexIn(self.sourceModel().data(index1)) != -1)
+            regexp = self.filterRegExp()
+            if regexp.indexIn(self.sourceModel().data(index)) != -1:
+                res = True
+        return res
 
     def _text_less_than(self, data1, data2):
         return locale.strcoll(data1, data2) < 0
