@@ -200,7 +200,7 @@ class PlayerTableModel(QAbstractTableModel):
         # TODO : adding player?
         return len(self._players)
 
-    def data(self, qt_index, role):
+    def data(self, qt_index, role=Qt.DisplayRole):
         if not qt_index.isValid():
             return None
 

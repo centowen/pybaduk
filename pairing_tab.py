@@ -118,7 +118,7 @@ class PairingTableModel(QAbstractTableModel):
         # TODO : editing?
         return len(self._pairings)
 
-    def data(self, index, role):
+    def data(self, index, role=Qt.DisplayRole):
         if not index.isValid():
             return None
 
@@ -161,6 +161,8 @@ class PairingTab(QWidget):
         self.ui.pairing_list.selectionModel().selectionChanged.connect(
             self.pairings_selected)
         self.ui.delete_pairing.clicked.connect(self.delete_pairing_clicked)
+        self.ui.filter_edit.textChanged.connect(
+            self.sorted_model.setFilterRegExp)
 
     def get_pairing_at_row(self, index):
         pairing_index = str(

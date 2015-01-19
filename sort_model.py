@@ -1,7 +1,8 @@
 import locale
 import logging
 
-from PyQt4.QtCore import QAbstractTableModel, Qt, QModelIndex, QVariant
+from PyQt4.QtCore import QAbstractTableModel, Qt, QModelIndex, QVariant, \
+    QRegExp
 from PyQt4.QtGui import (QWidget, QTableWidgetItem,
                          QSpinBox, QValidator, QLabel, QLineEdit,
                          QSortFilterProxyModel, QItemSelectionModel,
@@ -16,6 +17,9 @@ class SortModel(QSortFilterProxyModel):
     def __init__(self, *args, **kwargs):
         super(SortModel, self).__init__(*args, **kwargs)
 
+        self.setDynamicSortFilter(True)
+        self.setFilterCaseSensitivity(Qt.CaseInsensitive)
+
         locale_name = "sv_SE.UTF-8"
         try:
             locale.setlocale(locale.LC_ALL, locale_name)
@@ -26,6 +30,13 @@ class SortModel(QSortFilterProxyModel):
             except locale.Error:
                 logging.warning('Could not set locale {0}. Using system '
                                 'default.'.format(locale_name))
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        index0 = self.sourceModel().index(source_row, 0, source_parent)
+
+        regexp = self.filterRegExp()
+        return regexp.indexIn(self.sourceModel().data(index0)) != -1 or
+                regexp.indexIn(self.sourceModel().data(index1)) != -1)
 
     def _text_less_than(self, data1, data2):
         return locale.strcoll(data1, data2) < 0
