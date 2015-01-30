@@ -1,14 +1,10 @@
 import locale
 import logging
 
-from PyQt4.QtCore import QAbstractTableModel, Qt, QModelIndex, QVariant, \
-    QRegExp
-from PyQt4.QtGui import (QWidget, QTableWidgetItem,
-                         QSpinBox, QValidator, QLabel, QLineEdit,
-                         QSortFilterProxyModel, QItemSelectionModel,
-                         QShortcut)
+from PyQt4.QtCore import Qt, QModelIndex
+from PyQt4.QtGui import QSortFilterProxyModel
 
-from pybaduk_qt import GET_UNFORMATTED_ROLE, GET_INDEX_ROLE
+from pybaduk_qt import GET_UNFORMATTED_ROLE
 from unidecode import unidecode
 
 
@@ -93,5 +89,3 @@ class SortModel(QSortFilterProxyModel):
             logging.warning(
                 'Don\'t know how to sort field type {}.'.format(field_type))
             return data1 < data2
-
-
